@@ -17,10 +17,11 @@ import stocks.model.network.NetworkUtils;
 public class BhavCopyParser {
 
 	
-	public void parseBhavCopy(List<String> stockList, Calendar dateObj) throws IOException {
+	public List<DailyStockData> parseBhavCopy(List<String> stockList, Calendar dateObj) throws IOException {
 		String unzippedBhavCopyFile = StockConstants.STOCK_SCREENER_HOME + StockConstants.BHAV_COPY_FOLDER + File.separator +  NetworkUtils.getUnzippedBhavCopy(new java.util.Date(dateObj.getTimeInMillis()));
 		BufferedReader csvReader = new BufferedReader(new FileReader(unzippedBhavCopyFile));
 		String row;
+		List<DailyStockData> returnCollection = new ArrayList<DailyStockData>();
 		while ((row = csvReader.readLine()) != null) {
 		    String[] data = row.split(",");
 		    if(data[0].equals("N") && data[1].equals("EQ")) {  // first csv value is N and second EQ
@@ -34,12 +35,13 @@ public class BhavCopyParser {
 		    	       beanObj.setLow(Double.parseDouble(data[7]));
 		    	    	   beanObj.setClose(Double.parseDouble(data[8]));
 		    	    	   beanObj.setVolume(Long.parseLong(data[10]));
-		    	       System.out.println(beanObj);
+		    	       returnCollection.add(beanObj);
+		    	       
 		    	    }
 		    }
-		    // do something with the data
 		}
 		csvReader.close();
+		return returnCollection;
 	}
 	
 	public static void main (String args[]) throws IOException {

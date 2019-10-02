@@ -7,10 +7,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
+import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -18,31 +21,43 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import stocks.model.StockConstants;
+import stocks.model.data.SyncData;
 
 public class Downloader {
     private NetworkUtils netUtilObj = null;
 	public Downloader() {
 		netUtilObj = new NetworkUtils();
 	}
-public String downloadBhavCopy(java.util.Date dateObject) throws IOException {
+public String downloadBhavCopy(java.util.Date dateObject) throws IOException, SQLException {
 	String downloadedFile = null;
 	URL bhavUrl = new URL (netUtilObj.getBhavUrl(dateObject));
 	String bhavCopyFile = netUtilObj.getBhavCopyFile(dateObject);
 	String absFilePath = StockConstants.STOCK_SCREENER_HOME + StockConstants.BHAV_COPY_DOWNLOAD_FOLDER + File.separator+bhavCopyFile;
 	FileOutputStream fileOutputStream =null;
 	File downloadFile = new File(absFilePath);
+	SyncData dataObj = new SyncData();
 	try {
-		if(!downloadFile.exists()) {     // if the file already exists dont download it
-			ReadableByteChannel readableByteChannel = Channels.newChannel(bhavUrl.openStream());
-			fileOutputStream = new FileOutputStream(absFilePath);
-			FileChannel fileChannel = fileOutputStream.getChannel();
-			fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
-			downloadedFile = absFilePath;
+		if(!downloadFile.exists()) {     // if the file doesnt exist
+			// check if its a registered holiday
+			if(!dataObj.isHoliday(new java.sql.Date(dateObject.getTime()))) {         // if its not a registered holiday
+				boolean isHoliday = register404(bhavUrl);                             // check over network if file exists 
+				if(isHoliday) {                                                       // if file doesnt exist
+					dataObj.registerHoliday(new java.sql.Date(dateObject.getTime())); // register the holiday
+				}
+				else {                                                                // if its not a holiday download the file
+					ReadableByteChannel readableByteChannel = null;
+					readableByteChannel= Channels.newChannel(bhavUrl.openStream());
+					fileOutputStream = new FileOutputStream(absFilePath);
+					FileChannel fileChannel = fileOutputStream.getChannel();
+					fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+					downloadedFile = absFilePath;
+				}
+			}
 		}
-		else {
-			downloadedFile = absFilePath;
-		}
-	} catch (IOException e) {
+		else {                                                                       // if the file exists return the file path
+				downloadedFile = absFilePath;
+		} 
+	}catch (IOException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
 	}
@@ -54,11 +69,34 @@ public String downloadBhavCopy(java.util.Date dateObject) throws IOException {
 	return downloadedFile;
 }
 
-public String unzipBhavCopy(String zippedBhavCopyFile) {
+private boolean register404(URL bhavUrl) {
+	boolean returnValue = false;
+	URLConnection conn= null;
+	try {
+		conn = bhavUrl.openConnection();
+		conn.getInputStream();
+	}
+	catch (IOException ex) {
+		try {
+			int responseCode = ((HttpURLConnection)conn).getResponseCode();
+			if(responseCode == 404) {
+				returnValue = true;
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	return returnValue;
+}
+
+public String unzipBhavCopy(String zippedBhavCopyFile) throws SQLException {
 	byte[] buffer = new byte[1024];
 	FileInputStream fis;
 	String unzippedFileName = null;
+	
     try {
+    	if(zippedBhavCopyFile != null) {
         fis = new FileInputStream(zippedBhavCopyFile);
         ZipInputStream zis = new ZipInputStream(fis);
         ZipEntry ze = zis.getNextEntry();
@@ -75,6 +113,8 @@ public String unzipBhavCopy(String zippedBhavCopyFile) {
                 		fos.write(buffer, 0, len);
                 }
                 fos.close();
+                SyncData dataObj = new SyncData();
+				dataObj.registerUnzipEvent(zippedBhavCopyFile);
                
             }
             else {
@@ -87,6 +127,7 @@ public String unzipBhavCopy(String zippedBhavCopyFile) {
         zis.closeEntry();
         zis.close();
         fis.close();
+    	}
     } catch (IOException e) {
         e.printStackTrace();
     }
@@ -94,7 +135,7 @@ public String unzipBhavCopy(String zippedBhavCopyFile) {
     
 }
 
-public static void main (String args[]) {
+public static void main (String args[]) throws SQLException {
 	Calendar currentDate = new GregorianCalendar();
 	int lastYear = currentDate.get(Calendar.YEAR) -1;
 	Calendar oldDate = new GregorianCalendar();
