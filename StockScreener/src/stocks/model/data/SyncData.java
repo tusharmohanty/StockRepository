@@ -18,32 +18,11 @@ import stocks.model.data.DBTxn;
 import stocks.model.network.Downloader;
 import stocks.util.StockCalendar;
 import stocks.util.Utils;
-import stocks.model.beans.DailyStockData;
+import stocks.model.beans.StockDataBean;
 import stocks.model.beans.StocksBean;
 import stocks.model.bhavCopy.BhavCopyParser;
 public class SyncData {
-List <StocksBean> getStockList() throws SQLException{
-	List <StocksBean> stockList = new ArrayList<StocksBean>();
-	Connection conn= DBTxn.INSTANCE.DS.getConnection();
-	Statement stmt = null;
-	ResultSet rs = null;
-	try {
-		stmt = conn.createStatement();
-		rs = stmt.executeQuery("Select stock_code, stock_name from stocks");
-		while(rs.next()) {
-			StocksBean beanObj = new StocksBean();
-			beanObj.setStockCode(rs.getString("stock_Code"));
-			beanObj.setStockName(rs.getString("stock_name"));
-			stockList.add(beanObj);
-		}
-	}
-	finally {
-		rs.close();
-		stmt.close();
-		conn.close();
-	}
-	return stockList;
-}
+
 
 
 /***
@@ -116,12 +95,12 @@ private Map<StockCalendar,List<String>> getTargetSyncData(List <StocksBean> stoc
 }
 
 
-private void persistData(List<DailyStockData> dataObj) throws SQLException {
+private void persistData(List<StockDataBean> dataObj) throws SQLException {
 	Connection conn= DBTxn.INSTANCE.DS.getConnection();
 	PreparedStatement stmt = null;
 	try {
 		for(int tempCount =0; tempCount < dataObj.size();tempCount++) {
-			DailyStockData data = dataObj.get(tempCount);
+			StockDataBean data = dataObj.get(tempCount);
 			stmt = conn.prepareStatement("insert into  stock_data(txn_date,stock_code,open,close,high,low,volume) values (?,?,?,?,?,?,?)");
 			stmt.setDate(1, new Date(data.getDateObj().getTimeInMillis()));
 			stmt.setString(2, data.getStockCode());
@@ -142,7 +121,7 @@ private void persistData(List<DailyStockData> dataObj) throws SQLException {
 }
 
 public void syncData() throws SQLException, IOException {
-	List <StocksBean> stockList = getStockList();
+	List <StocksBean> stockList = DataAccess.INSTANCE.getStockList();
 	Map<StockCalendar,List<String>> masterSyncList =  getTargetSyncData(stockList);
 	Downloader downloaderObj = new Downloader();
 	BhavCopyParser parserObj = new BhavCopyParser();
@@ -154,7 +133,7 @@ public void syncData() throws SQLException, IOException {
 		boolean unzipResult = downLoadAndUnzipBhavCopy(new java.util.Date(dateObj.getTimeInMillis()));
 		
 		if(unzipResult ) {
-			List<DailyStockData> dataObj= parserObj.parseBhavCopy(stockStringlist, dateObj);
+			List<StockDataBean> dataObj= parserObj.parseBhavCopy(stockStringlist, dateObj);
 			persistData(dataObj);
 		}
 	}

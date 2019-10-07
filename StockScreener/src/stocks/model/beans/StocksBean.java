@@ -18,4 +18,8 @@ public String getStockName() {
 public void setStockName(String stockName) {
 	this.stockName = stockName;
 }
+
+public String toString() {
+	return this.stockName;
+}
 }

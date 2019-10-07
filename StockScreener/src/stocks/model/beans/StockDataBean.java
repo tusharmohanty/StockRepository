@@ -2,7 +2,7 @@ package stocks.model.beans;
 
 import java.util.Calendar;
 
-public class DailyStockData {
+public class StockDataBean {
    private String stockCode;
    private Calendar dateObj;
    private double  open, close,high,low;
