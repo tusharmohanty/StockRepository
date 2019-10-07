@@ -68,6 +68,7 @@ private XYDataset getMainDataSet(String scripCode) {
 					          beanObj.getDateObj().get(Calendar.MONTH) + 1, 
 					          beanObj.getDateObj().get(Calendar.YEAR)),
 					  beanObj.getClose());
+			
 		}
 		dataSet.addSeries(price);
 		
