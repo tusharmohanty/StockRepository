@@ -48,7 +48,8 @@ public List <StockDataBean> getStockData(String stockCode) throws SQLException{
 	PreparedStatement stmt = null;
 	ResultSet rs = null;
 	try {
-		stmt = conn.prepareStatement("Select stock_code, txn_date, open , close, high, low , volume  from stock_data where stock_code = ?");
+		stmt = conn.prepareStatement("Select s.stock_code, s.txn_date, s.open , s.close, s.high, s.low , s.volume, cast(round((s.close/e.eps)/4,2) as numeric (18,2)) as pe from stock_data s, earnings e where s.stock_code = ? "
+				                   + "and s.stock_code = e.stock_code(+) and s.TXN_DATE between nvl(e.EFFECTIVE_START_DATE,to_date('01/01/1950','DD/MM/YYYY')) and nvl(e.EFFECTIVE_END_DATE,to_date('31/12/4712','DD/MM/YYYY')) ");
 		stmt.setString(1, stockCode);
 		rs = stmt.executeQuery();
 		while(rs.next()) {
@@ -62,6 +63,7 @@ public List <StockDataBean> getStockData(String stockCode) throws SQLException{
 			beanObj.setHigh(rs.getDouble("high"));
 			beanObj.setClose(rs.getDouble("close"));
 			beanObj.setVolume(rs.getLong("volume"));
+			beanObj.setPE(rs.getDouble("pe"));
 			stockDataList.add(beanObj);
 		}
 	}

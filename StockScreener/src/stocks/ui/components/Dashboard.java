@@ -11,9 +11,10 @@ import stocks.ui.components.panels.MainChartPanel;
 import stocks.ui.components.panels.StockPanel;
 
 public class Dashboard extends JFrame{
-	StockPanel stockPanel = StockPanel.INSTANCE;
-	MainChartPanel chartPanel = MainChartPanel.INSTANCE;
-    public Dashboard() {
+	public static final StockPanel stockPanel = StockPanel.INSTANCE;
+	public static final MainChartPanel chartPanel = MainChartPanel.INSTANCE;
+	public static final Dashboard INSTANCE = new Dashboard(); 
+    private  Dashboard() {
     	   this.setDefaultCloseOperation(EXIT_ON_CLOSE);
     	   this.setTitle("Stock Screener 1.0");
     	   this.setPreferredSize(new Dimension(3000,12000));
@@ -36,7 +37,7 @@ public class Dashboard extends JFrame{
     }
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-        Dashboard uiObj = new Dashboard();
+        Dashboard uiObj = Dashboard.INSTANCE;
         uiObj.initializeComponents();
         uiObj.pack();
         uiObj.setVisible(true);

@@ -35,6 +35,13 @@ CONSTRAINT holiday_list_pk PRIMARY KEY (holiday)
 )
 
 create table unzip_bhavcopy(
-bhav_copy VARCHAR2(200),
-CONSTRAINT unzip_bhavcopy_pk PRIMARY KEY (bhav_copy)
+	bhav_copy VARCHAR2(200),
+	CONSTRAINT unzip_bhavcopy_pk PRIMARY KEY (bhav_copy)
+)
+
+create table earnings(
+	stock_code varchar2(50) NOT NULL,
+    effective_start_date Date NOT NULL,
+    effective_end_date Date,
+    eps NUMBER(18,2) NOT NULL
 )

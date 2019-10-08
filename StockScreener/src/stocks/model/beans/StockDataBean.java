@@ -5,8 +5,15 @@ import java.util.Calendar;
 public class StockDataBean {
    private String stockCode;
    private Calendar dateObj;
-   private double  open, close,high,low;
-   private long volume;
+   private double  open, close,high,low,pe;
+   public double getPE() {
+	return pe;
+}
+public void setPE(double pe) {
+	this.pe = pe;
+}
+
+private long volume;
 public String getStockCode() {
 	return stockCode;
 }

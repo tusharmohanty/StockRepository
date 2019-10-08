@@ -217,7 +217,7 @@ public void registerUnzipEvent(String zippedBhavCopyFilePath) throws SQLExceptio
 	Connection conn= DBTxn.INSTANCE.DS.getConnection();
 	PreparedStatement stmt = null;
 	try {
-			stmt = conn.prepareStatement("merge  into  unzip_bhavcopy a using (select bhavcopy from unzip_bhavcopy ) b on (a.bhavcopy= b.bhavcopy) when not matched then insert (bhavcopy) values (?) ");
+			stmt = conn.prepareStatement("merge  into  unzip_bhavcopy a using (select bhav_copy from unzip_bhavcopy ) b on (a.bhav_copy= b.bhav_copy) when not matched then insert (bhav_copy) values (?) ");
 			stmt.setString(1,zippedBhavCopyFilePath);
 			stmt.executeUpdate();
 		   // conn.commit();
