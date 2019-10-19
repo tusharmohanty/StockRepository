@@ -65,7 +65,7 @@ public List <StockDataBean> getStockData(String stockCode) throws SQLException{
 			beanObj.setOpen(rs.getDouble("open"));
 			beanObj.setClose(rs.getDouble("close"));
 			beanObj.setHigh(rs.getDouble("high"));
-			beanObj.setClose(rs.getDouble("close"));
+			beanObj.setLow(rs.getDouble("low"));
 			beanObj.setVolume(rs.getLong("volume"));
 			beanObj.setPE(rs.getDouble("pe"));
 			stockDataList.add(beanObj);

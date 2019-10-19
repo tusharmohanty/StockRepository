@@ -32,6 +32,7 @@ import org.jfree.data.general.DatasetUtils;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.data.time.TimeSeriesDataItem;
 import org.jfree.data.time.ohlc.OHLCItem;
 import org.jfree.data.time.ohlc.OHLCSeries;
 import org.jfree.data.time.ohlc.OHLCSeriesCollection;
@@ -112,7 +113,7 @@ private JFreeChart createCandlStickChart() {
 	 */
 	// Creating charts common dateAxis
 	DateAxis dateAxis = new DateAxis("Time");
-	dateAxis.setDateFormatOverride(new SimpleDateFormat("kk:mm"));
+	dateAxis.setDateFormatOverride(new SimpleDateFormat("dd-MM-yyyy"));
 	// reduce the default left/right margin from 0.05 to 0.02
 	dateAxis.setLowerMargin(0.02);
 	dateAxis.setUpperMargin(0.02);
@@ -132,34 +133,20 @@ private JFreeChart createCandlStickChart() {
 public void refreshDataSet() {
 	XYPlot plot = (XYPlot) mainChart.getPlot();
 	ohlcSeries.clear();
+	volumeSeries.clear();
 	getMainDataSet();
 	//plot.setDataset(1,getEarningsDataSet());
 }
 
-private XYDataset getEarningsDataSet() {
-	
-    TimeSeries earnings = new TimeSeries("Earnings");
-    TimeSeriesCollection earningsDataSet = new TimeSeriesCollection();
-	for(int tempCount=0; tempCount < stockData.size();tempCount++) {
-		StockDataBean beanObj = stockData.get(tempCount);
-		Day dayObj = new Day(beanObj.getDateObj().get(Calendar.DATE),
-		          beanObj.getDateObj().get(Calendar.MONTH) + 1, 
-		          beanObj.getDateObj().get(Calendar.YEAR));
-		earnings.add(dayObj,beanObj.getPE());
-		
-	}
-	earningsDataSet.addSeries(earnings);
-	return earningsDataSet;
-	
-}
 private void getMainDataSet() {
 	
-	for(int tempCount=0; tempCount < stockData.size();tempCount++) {
+	for(int tempCount=0; tempCount < 100;tempCount++) {
 		StockDataBean beanObj = stockData.get(tempCount);
 		Day dayObj = new Day(beanObj.getDateObj().get(Calendar.DATE),
 		          beanObj.getDateObj().get(Calendar.MONTH) + 1, 
 		          beanObj.getDateObj().get(Calendar.YEAR));
 		ohlcSeries.add(new OHLCItem(dayObj, beanObj.getOpen(),beanObj.getHigh(), beanObj.getLow(),beanObj.getClose()));
+		volumeSeries.add(new TimeSeriesDataItem(dayObj,beanObj.getVolume()));
 	}
 }
 
