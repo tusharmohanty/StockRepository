@@ -5,6 +5,7 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.util.List;
 
 import javax.swing.JComboBox;
@@ -15,6 +16,7 @@ import stocks.model.beans.StockDataBean;
 import stocks.model.beans.StocksBean;
 import stocks.model.data.DataAccess;
 import stocks.ui.components.Dashboard;
+import stocks.ui.components.charts.InvestmentChart;
 import stocks.ui.components.charts.MainPriceChart;
 
 public class StockPanel extends JPanel implements ActionListener{
@@ -52,8 +54,12 @@ public void actionPerformed(ActionEvent e) {
         	   List <StockDataBean> stockData = null;
         	   try {
         		   stockData = DataAccess.INSTANCE.getStockData(scripCode);
-        		   MainPriceChart.INSTANCE.stockData = stockData;
-        		   MainPriceChart.INSTANCE.refreshDataSet();;
+        		   InvestmentChart.INSTANCE.stockData = stockData;
+        		   InvestmentChart.INSTANCE.refreshDataSet();;
+        		   BasicInfoPanel.INSTANCE.data[0][1]= new DecimalFormat("##.##").format(DataAccess.INSTANCE.latestValue*0.002);
+        		   BasicInfoPanel.INSTANCE.data[1][1]= new DecimalFormat("##.##").format(DataAccess.INSTANCE.latestValue*1.002);
+        		   
+        		   BasicInfoPanel.INSTANCE.table.repaint();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();

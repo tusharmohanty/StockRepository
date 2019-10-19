@@ -4,6 +4,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
@@ -17,9 +18,12 @@ import org.jfree.chart.axis.AxisLocation;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.panel.CrosshairOverlay;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.CandlestickRenderer;
 import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
+import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.ui.RectangleAnchor;
@@ -28,14 +32,19 @@ import org.jfree.data.general.DatasetUtils;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.data.time.ohlc.OHLCItem;
+import org.jfree.data.time.ohlc.OHLCSeries;
+import org.jfree.data.time.ohlc.OHLCSeriesCollection;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.chart.ui.RectangleInsets;
+import org.jfree.chart.plot.CombinedDomainXYPlot;
 import org.jfree.chart.plot.Crosshair;
+import org.jfree.chart.plot.PlotOrientation;
 
 import stocks.model.beans.StockDataBean;
 import stocks.model.data.DataAccess;
 
-public class MainPriceChart implements ChartMouseListener{
+public class InvestmentChart implements ChartMouseListener{
 JFreeChart mainChart= null;
 public ChartPanel chartPanel = null;
 
@@ -44,10 +53,12 @@ private static final int SERIES_COUNT = 2;
 private Crosshair xCrosshair;
 private Crosshair[] yCrosshairs;
 public List<StockDataBean> stockData = null;
+private OHLCSeries ohlcSeries;
+private TimeSeries volumeSeries;
 
-public static final MainPriceChart INSTANCE = new MainPriceChart();
+public static final InvestmentChart INSTANCE = new InvestmentChart();
 
-private MainPriceChart() {
+private InvestmentChart() {
 	// Get all teh data first
 	try {
 		stockData = DataAccess.INSTANCE.getStockData(null);
@@ -56,71 +67,74 @@ private MainPriceChart() {
 	e.printStackTrace();
    }
 	// get the main chart sorted 
-	mainChart = ChartFactory.createTimeSeriesChart(null, null, null, getMainDataSet(), false, false,false);
+	mainChart = createCandlStickChart();
 	chartPanel = new ChartPanel(mainChart);
-	initializeChart();
 	chartPanel.setPreferredSize(new java.awt.Dimension(2200, 1200));
 	//chartPanel.setMouseZoomable(true, false);
 	
 }
 
-public void refreshDataSet() {
-	XYPlot plot = (XYPlot) mainChart.getPlot();
-	plot.setDataset(0,getMainDataSet());
-	plot.setDataset(1,getEarningsDataSet());
+private JFreeChart createCandlStickChart() {
+	OHLCSeriesCollection candlestickDataset = new OHLCSeriesCollection();
+	ohlcSeries = new OHLCSeries("Price");
+	candlestickDataset.addSeries(ohlcSeries);
+	NumberAxis priceAxis = new NumberAxis("Price");
+	priceAxis.setAutoRangeIncludesZero(false);
+	// Create candlestick chart renderer
+	CandlestickRenderer candlestickRenderer = new CandlestickRenderer(CandlestickRenderer.WIDTHMETHOD_AVERAGE);
+	// Create candlestickSubplot
+	XYPlot candlestickSubplot = new XYPlot(candlestickDataset, null, priceAxis, candlestickRenderer);
+	candlestickSubplot.setBackgroundPaint(Color.white);
+    
+	/**
+	 * Creating volume subplot
+	 */
+	// creates TimeSeriesCollection as a volume dataset for volume chart
+	TimeSeriesCollection volumeDataset = new TimeSeriesCollection();
+	volumeSeries = new TimeSeries("Volume");
+	volumeDataset.addSeries(volumeSeries);
+	// Create volume chart volumeAxis
+	NumberAxis volumeAxis = new NumberAxis("Volume");
+	volumeAxis.setAutoRangeIncludesZero(false);
+	// Set to no decimal
+	volumeAxis.setNumberFormatOverride(new DecimalFormat("0"));
+	// Create volume chart renderer
+	XYBarRenderer timeRenderer = new XYBarRenderer();
+	timeRenderer.setShadowVisible(false);
+	//timeRenderer.setBaseToolTipGenerator(new StandardXYToolTipGenerator("Volume--> Time={1} Size={2}",
+	//		new SimpleDateFormat("kk:mm"), new DecimalFormat("0")));
+	// Create volumeSubplot
+	XYPlot volumeSubplot = new XYPlot(volumeDataset, null, volumeAxis, timeRenderer);
+	volumeSubplot.setBackgroundPaint(Color.white);
+	/**
+	 * Create chart main plot with two subplots (candlestickSubplot,
+	 * volumeSubplot) and one common dateAxis
+	 */
+	// Creating charts common dateAxis
+	DateAxis dateAxis = new DateAxis("Time");
+	dateAxis.setDateFormatOverride(new SimpleDateFormat("kk:mm"));
+	// reduce the default left/right margin from 0.05 to 0.02
+	dateAxis.setLowerMargin(0.02);
+	dateAxis.setUpperMargin(0.02);
+	// Create mainPlot
+	CombinedDomainXYPlot mainPlot = new CombinedDomainXYPlot(dateAxis);
+	mainPlot.setGap(10.0);
+	mainPlot.add(candlestickSubplot, 3);
+	mainPlot.add(volumeSubplot, 1);
+	mainPlot.setOrientation(PlotOrientation.VERTICAL);
+
+	JFreeChart chart = new JFreeChart(null, JFreeChart.DEFAULT_TITLE_FONT, mainPlot, true);
+	chart.removeLegend();
+	return chart;
+
 }
 
-private  void initializeChart() {
-	getMainDataSet();
+public void refreshDataSet() {
 	XYPlot plot = (XYPlot) mainChart.getPlot();
-	plot.setInsets(new RectangleInsets(5.0, 5.0, 5.0, 5.0));
-    plot.setBackgroundPaint(Color.BLACK);
-    plot.setDomainGridlinePaint(Color.white);
-    plot.setRangeGridlinePaint(Color.white);
-    plot.setDomainCrosshairVisible(true);
-    plot.setRangeCrosshairVisible(true);
-    XYItemRenderer r = plot.getRenderer();
-    if (r instanceof XYLineAndShapeRenderer) {
-        XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) r;
-        renderer.setDefaultShapesVisible(false);
-        renderer.setDefaultShapesFilled(false);
-    }
-    DateAxis axis = (DateAxis) plot.getDomainAxis();
-    axis.setDateFormatOverride(new SimpleDateFormat("dd-MM-yyyy"));
-    
-   
-    
- // AXIS 2
-    NumberAxis axis2 = new NumberAxis("Earnings");
-    axis2.setAutoRangeIncludesZero(false);
-    plot.setRangeAxis(1, axis2);
-    plot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_LEFT);
-    plot.setDataset(1, getEarningsDataSet());
-    plot.mapDatasetToRangeAxis(1, 1);
-    XYItemRenderer renderer2 = new StandardXYItemRenderer();
-    plot.setRenderer(1, renderer2);
-    
-    CrosshairOverlay crosshairOverlay = new CrosshairOverlay();
-    this.xCrosshair = new Crosshair(Double.NaN, Color.WHITE, new BasicStroke(0.5f));
-    this.xCrosshair.setLabelVisible(true);
-    this.xCrosshair.setLabelBackgroundPaint(Color.WHITE);
-    
-    crosshairOverlay.addDomainCrosshair(xCrosshair);
-    this.yCrosshairs = new Crosshair[SERIES_COUNT];
-    
-    
-    for (int i = 0; i < SERIES_COUNT; i++) {
-        this.yCrosshairs[i] = new Crosshair(Double.NaN, Color.WHITE, new BasicStroke(0.5f));
-        this.yCrosshairs[i].setLabelVisible(true);
-        if (i % 2 != 0) {
-            this.yCrosshairs[i].setLabelAnchor(RectangleAnchor.TOP_RIGHT);
-        }
-        crosshairOverlay.addRangeCrosshair(yCrosshairs[i]);
-    }
-    this.yCrosshairs[0].setLabelBackgroundPaint(Color.WHITE);
-    chartPanel.addOverlay(crosshairOverlay);
-    this.chartPanel.addChartMouseListener(this);
+	getMainDataSet();
+	//plot.setDataset(1,getEarningsDataSet());
 }
+
 private XYDataset getEarningsDataSet() {
 	
     TimeSeries earnings = new TimeSeries("Earnings");
@@ -137,19 +151,15 @@ private XYDataset getEarningsDataSet() {
 	return earningsDataSet;
 	
 }
-private XYDataset getMainDataSet() {
-	TimeSeries price = new TimeSeries("Price");
+private void getMainDataSet() {
 	
-	TimeSeriesCollection dataSet = new TimeSeriesCollection();
 	for(int tempCount=0; tempCount < stockData.size();tempCount++) {
 		StockDataBean beanObj = stockData.get(tempCount);
 		Day dayObj = new Day(beanObj.getDateObj().get(Calendar.DATE),
 		          beanObj.getDateObj().get(Calendar.MONTH) + 1, 
 		          beanObj.getDateObj().get(Calendar.YEAR));
-		price.add(dayObj,beanObj.getClose());
+		ohlcSeries.add(new OHLCItem(dayObj, beanObj.getOpen(),beanObj.getHigh(), beanObj.getLow(),beanObj.getClose()));
 	}
-	dataSet.addSeries(price);
-	return dataSet;
 }
 
 /**
