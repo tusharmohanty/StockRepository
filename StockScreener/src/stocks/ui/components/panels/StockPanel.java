@@ -16,7 +16,7 @@ import stocks.model.beans.StockDataBean;
 import stocks.model.beans.StocksBean;
 import stocks.model.data.DataAccess;
 import stocks.ui.components.Dashboard;
-import stocks.ui.components.charts.InvestmentChart;
+import stocks.ui.components.charts.TradeChart;
 import stocks.ui.components.charts.MainPriceChart;
 
 public class StockPanel extends JPanel implements ActionListener{
@@ -54,8 +54,10 @@ public void actionPerformed(ActionEvent e) {
         	   List <StockDataBean> stockData = null;
         	   try {
         		   stockData = DataAccess.INSTANCE.getStockData(scripCode);
-        		   InvestmentChart.INSTANCE.stockData = stockData;
-        		   InvestmentChart.INSTANCE.refreshDataSet();;
+        		   MainPriceChart.INSTANCE.stockData = stockData;
+        		   MainPriceChart.INSTANCE.refreshDataSet();
+        		   TradeChart.INSTANCE.stockData = stockData;
+        		   TradeChart.INSTANCE.refreshDataSet();
         		   BasicInfoPanel.INSTANCE.data[0][1]= new DecimalFormat("##.##").format(DataAccess.INSTANCE.latestValue*0.002);
         		   BasicInfoPanel.INSTANCE.data[1][1]= new DecimalFormat("##.##").format(DataAccess.INSTANCE.latestValue*1.002);
         		   

@@ -44,7 +44,7 @@ import org.jfree.chart.plot.PlotOrientation;
 import stocks.model.beans.StockDataBean;
 import stocks.model.data.DataAccess;
 
-public class InvestmentChart implements ChartMouseListener{
+public class TradeChart implements ChartMouseListener{
 JFreeChart mainChart= null;
 public ChartPanel chartPanel = null;
 
@@ -56,9 +56,9 @@ public List<StockDataBean> stockData = null;
 private OHLCSeries ohlcSeries;
 private TimeSeries volumeSeries;
 
-public static final InvestmentChart INSTANCE = new InvestmentChart();
+public static final TradeChart INSTANCE = new TradeChart();
 
-private InvestmentChart() {
+private TradeChart() {
 	// Get all teh data first
 	try {
 		stockData = DataAccess.INSTANCE.getStockData(null);
@@ -131,6 +131,7 @@ private JFreeChart createCandlStickChart() {
 
 public void refreshDataSet() {
 	XYPlot plot = (XYPlot) mainChart.getPlot();
+	ohlcSeries.clear();
 	getMainDataSet();
 	//plot.setDataset(1,getEarningsDataSet());
 }
