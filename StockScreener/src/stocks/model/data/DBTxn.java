@@ -11,7 +11,7 @@ import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import javax.sql.DataSource;
 public class DBTxn {
 	public static DBTxn INSTANCE= new DBTxn();
-	DataSource DS = null;
+	public DataSource DS = null;
 	private DBTxn () {
 			try {
 				Class.forName( "oracle.jdbc.driver.OracleDriver" );

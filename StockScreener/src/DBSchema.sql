@@ -45,3 +45,11 @@ create table earnings(
     effective_end_date Date,
     eps NUMBER(18,2) NOT NULL
 )
+
+create table stats(
+  stock_code  varchar2(50) NOT NULL,
+  txn_date   Date NOT NULL,
+  sma_16     NUMBER(18,2),
+  sma_26     NUMBER(18,2),
+  CONSTRAINT stats_pk PRIMARY KEY (stock_code,txn_date)
+)

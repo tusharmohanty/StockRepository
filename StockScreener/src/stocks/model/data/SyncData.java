@@ -13,9 +13,12 @@ import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import stocks.model.data.DBTxn;
 import stocks.model.network.Downloader;
+import stocks.model.stats.MA;
 import stocks.util.StockCalendar;
 import stocks.util.Utils;
 import stocks.model.StockConstants;
@@ -68,8 +71,8 @@ private List<StockCalendar> dataExists(String stockCode) throws SQLException{
 
 
 
-private Map<StockCalendar,List<String>> getTargetSyncData(List <StocksBean> stockList, String exchange) throws SQLException {
-	Map<StockCalendar,List<String>> returnMap = new Hashtable<StockCalendar,List<String>>();
+private SortedMap<StockCalendar,List<String>> getTargetSyncData(List <StocksBean> stockList, String exchange) throws SQLException {
+	SortedMap<StockCalendar,List<String>> returnMap = new TreeMap<StockCalendar,List<String>>();
 	StockCalendar oldDate = Utils.getLastYearDate();                   //initialize date to 1 year back
 	StockCalendar currentDate = new StockCalendar();
 	for(int tempCount =0; tempCount < stockList.size() ; tempCount++) {   // iterate over each stock list
@@ -102,6 +105,7 @@ private Map<StockCalendar,List<String>> getTargetSyncData(List <StocksBean> stoc
 private void persistData(List<StockDataBean> dataObj) throws SQLException {
 	Connection conn= DBTxn.INSTANCE.DS.getConnection();
 	PreparedStatement stmt = null;
+	MA statsObj = new MA();
 	try {
 		for(int tempCount =0; tempCount < dataObj.size();tempCount++) {
 			StockDataBean data = dataObj.get(tempCount);
@@ -115,6 +119,7 @@ private void persistData(List<StockDataBean> dataObj) throws SQLException {
 			stmt.setLong(7, data.getVolume());
 			System.out.println(data);
 			stmt.executeUpdate();
+			statsObj.generateMA(data.getStockCode(), data.getDateObj());
 		}
 		//conn.commit();
 		
@@ -129,8 +134,8 @@ private void persistData(List<StockDataBean> dataObj) throws SQLException {
 
 public void syncData() throws SQLException, IOException {
 	List <StocksBean> stockList = DataAccess.INSTANCE.getStockList();
-	Map<StockCalendar,List<String>> NSEMasterSyncList =  getTargetSyncData(stockList, StockConstants.NSE_EXCHANGE);
-	Map<StockCalendar,List<String>> BSEMasterSyncList =  getTargetSyncData(stockList, StockConstants.BSE_EXCHANGE);
+	SortedMap<StockCalendar,List<String>> NSEMasterSyncList =  getTargetSyncData(stockList, StockConstants.NSE_EXCHANGE);
+	SortedMap<StockCalendar,List<String>> BSEMasterSyncList =  getTargetSyncData(stockList, StockConstants.BSE_EXCHANGE);
 	BhavCopyParser parserObj = new BhavCopyParser();
 	for(Map.Entry<StockCalendar,List<String>> entry :NSEMasterSyncList.entrySet()) {
 		StockCalendar dateObj = entry.getKey();
