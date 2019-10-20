@@ -26,11 +26,12 @@ public List <StocksBean> getStockList() throws SQLException{
 	ResultSet rs = null;
 	try {
 		stmt = conn.createStatement();
-		rs = stmt.executeQuery("Select stock_code, stock_name from stocks");
+		rs = stmt.executeQuery("Select stock_code, stock_name, exchange from stocks");
 		while(rs.next()) {
 			StocksBean beanObj = new StocksBean();
 			beanObj.setStockCode(rs.getString("stock_Code"));
 			beanObj.setStockName(rs.getString("stock_name"));
+			beanObj.setExchange(rs.getString("exchange"));
 			stockList.add(beanObj);
 		}
 	}

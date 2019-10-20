@@ -18,6 +18,7 @@ import stocks.model.data.DBTxn;
 import stocks.model.network.Downloader;
 import stocks.util.StockCalendar;
 import stocks.util.Utils;
+import stocks.model.StockConstants;
 import stocks.model.beans.StockDataBean;
 import stocks.model.beans.StocksBean;
 import stocks.model.bhavCopy.BhavCopyParser;
@@ -67,28 +68,31 @@ private List<StockCalendar> dataExists(String stockCode) throws SQLException{
 
 
 
-private Map<StockCalendar,List<String>> getTargetSyncData(List <StocksBean> stockList) throws SQLException {
+private Map<StockCalendar,List<String>> getTargetSyncData(List <StocksBean> stockList, String exchange) throws SQLException {
 	Map<StockCalendar,List<String>> returnMap = new Hashtable<StockCalendar,List<String>>();
 	StockCalendar oldDate = Utils.getLastYearDate();                   //initialize date to 1 year back
 	StockCalendar currentDate = new StockCalendar();
-	for(int tempCount =0; tempCount < stockList.size(); tempCount++) {   // iterate over each stock list
+	for(int tempCount =0; tempCount < stockList.size() ; tempCount++) {   // iterate over each stock list
 		String stockCode = stockList.get(tempCount).getStockCode();
-		List<StockCalendar> dataPresent = dataExists(stockCode);              // get the list of dates when data is not present
-		while (oldDate.before(currentDate)) {                            // start counting from 1 year back
-			if(!dataPresent.contains(oldDate)) {                         // if data is not present for the given date
-				if(!returnMap.containsKey(oldDate)) {                    // if this is a new entry , create a new list and add current stock to it 
-					List<String> valueObj =  new ArrayList<String>();
-					valueObj.add(stockCode);
-					returnMap.put((StockCalendar)oldDate.clone(),valueObj);
+		String exchangeData = stockList.get(tempCount).getExchange();
+		if(exchange.equals(exchangeData)) {
+			List<StockCalendar> dataPresent = dataExists(stockCode);              // get the list of dates when data is not present
+			while (oldDate.before(currentDate)) {                            // start counting from 1 year back
+				if(!dataPresent.contains(oldDate)) {                         // if data is not present for the given date
+					if(!returnMap.containsKey(oldDate)) {                    // if this is a new entry , create a new list and add current stock to it 
+						List<String> valueObj =  new ArrayList<String>();
+						valueObj.add(stockCode);
+						returnMap.put((StockCalendar)oldDate.clone(),valueObj);
+					}
+					else {                                                    // if an entry exists , get the entry and add current stock to it
+						List<String> valueObj = returnMap.get(oldDate);
+						valueObj.add(stockCode);
+						returnMap.put((StockCalendar)oldDate.clone(),valueObj);
+					}
 				}
-				else {                                                    // if an entry exists , get the entry and add current stock to it
-					List<String> valueObj = returnMap.get(oldDate);
-					valueObj.add(stockCode);
-					returnMap.put((StockCalendar)oldDate.clone(),valueObj);
+				oldDate.add(Calendar.DATE, 1);
 				}
-			}
-			oldDate.add(Calendar.DATE, 1);
-		}
+		}// if exchange info doesnt matter leave it 
 		oldDate = Utils.getLastYearDate();   
 	}
 	return returnMap;
@@ -109,31 +113,42 @@ private void persistData(List<StockDataBean> dataObj) throws SQLException {
 			stmt.setDouble(5, data.getHigh());
 			stmt.setDouble(6, data.getLow());
 			stmt.setLong(7, data.getVolume());
+			System.out.println(data);
 			stmt.executeUpdate();
 		}
 		//conn.commit();
 		
 	}
 	finally {
-		stmt.close();
+		if(stmt != null) {
+			stmt.close();
+		}
 		conn.close();
 	}
 }
 
 public void syncData() throws SQLException, IOException {
 	List <StocksBean> stockList = DataAccess.INSTANCE.getStockList();
-	Map<StockCalendar,List<String>> masterSyncList =  getTargetSyncData(stockList);
-	Downloader downloaderObj = new Downloader();
+	Map<StockCalendar,List<String>> NSEMasterSyncList =  getTargetSyncData(stockList, StockConstants.NSE_EXCHANGE);
+	Map<StockCalendar,List<String>> BSEMasterSyncList =  getTargetSyncData(stockList, StockConstants.BSE_EXCHANGE);
 	BhavCopyParser parserObj = new BhavCopyParser();
-	for(Map.Entry<StockCalendar,List<String>> entry :masterSyncList.entrySet()) {
+	for(Map.Entry<StockCalendar,List<String>> entry :NSEMasterSyncList.entrySet()) {
 		StockCalendar dateObj = entry.getKey();
-		SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd");
-		String formatted = format1.format(dateObj.getTime());
 		List<String> stockStringlist = entry.getValue();
-		boolean unzipResult = downLoadAndUnzipBhavCopy(new java.util.Date(dateObj.getTimeInMillis()));
+		boolean unzipResult = downLoadAndUnzipBhavCopy(new java.util.Date(dateObj.getTimeInMillis()),StockConstants.NSE_EXCHANGE);
 		
 		if(unzipResult ) {
-			List<StockDataBean> dataObj= parserObj.parseBhavCopy(stockStringlist, dateObj);
+			List<StockDataBean> dataObj= parserObj.parseBhavCopy(stockStringlist, dateObj,StockConstants.NSE_EXCHANGE);
+			persistData(dataObj);
+		}
+	}
+	for(Map.Entry<StockCalendar,List<String>> entry :BSEMasterSyncList.entrySet()) {
+		StockCalendar dateObj = entry.getKey();
+		List<String> stockStringlist = entry.getValue();
+		boolean unzipResult = downLoadAndUnzipBhavCopy(new java.util.Date(dateObj.getTimeInMillis()), StockConstants.BSE_EXCHANGE);
+		
+		if(unzipResult ) {
+			List<StockDataBean> dataObj= parserObj.parseBhavCopy(stockStringlist, dateObj, StockConstants.BSE_EXCHANGE);
 			persistData(dataObj);
 		}
 	}
@@ -142,13 +157,13 @@ public void syncData() throws SQLException, IOException {
 //for each date call parser
 //persist parser data
 
-private boolean downLoadAndUnzipBhavCopy(java.util.Date dateObj) throws IOException, SQLException {
+private boolean downLoadAndUnzipBhavCopy(java.util.Date dateObj, String exchange) throws IOException, SQLException {
 	boolean returnValue = true;
 	Downloader downloaderObj = new Downloader();
-	String downloadedFile = downloaderObj.downloadBhavCopy(dateObj);
+	String downloadedFile = downloaderObj.downloadBhavCopy(dateObj, exchange);
 	if(downloadedFile != null) {
 		if(!isAlreadyUnzipped(downloadedFile)) {
-			String unzipResult = downloaderObj.unzipBhavCopy (downloadedFile);
+			String unzipResult = downloaderObj.unzipBhavCopy (downloadedFile,exchange);
 		}
 	}
 	else {

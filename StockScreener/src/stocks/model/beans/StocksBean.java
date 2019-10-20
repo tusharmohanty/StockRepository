@@ -1,7 +1,15 @@
 package stocks.model.beans;
 
 public class StocksBean {
-String stockCode,stockName;
+String stockCode,stockName, exchange;
+
+public String getExchange() {
+	return exchange;
+}
+
+public void setExchange(String exchange) {
+	this.exchange = exchange;
+}
 
 public String getStockCode() {
 	return stockCode;

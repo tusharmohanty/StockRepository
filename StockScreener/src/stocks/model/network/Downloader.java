@@ -28,11 +28,17 @@ public class Downloader {
 	public Downloader() {
 		netUtilObj = new NetworkUtils();
 	}
-public String downloadBhavCopy(java.util.Date dateObject) throws IOException, SQLException {
+public String downloadBhavCopy(java.util.Date dateObject, String exchange) throws IOException, SQLException {
 	String downloadedFile = null;
-	URL bhavUrl = new URL (netUtilObj.getBhavUrl(dateObject));
-	String bhavCopyFile = netUtilObj.getBhavCopyFile(dateObject);
-	String absFilePath = StockConstants.STOCK_SCREENER_HOME + StockConstants.BHAV_COPY_DOWNLOAD_FOLDER + File.separator+bhavCopyFile;
+	URL bhavUrl = new URL (netUtilObj.getBhavUrl(dateObject, exchange));
+	String bhavCopyFile = netUtilObj.getBhavCopyFile(dateObject,exchange);
+	String absFilePath = "";
+	 if(exchange.equals(StockConstants.NSE_EXCHANGE)) {
+		 absFilePath = StockConstants.STOCK_SCREENER_HOME  + File.separator + StockConstants.BHAV_COPY_DOWNLOAD_FOLDER + File.separator+bhavCopyFile;
+	 }
+	 else {
+		 absFilePath = StockConstants.STOCK_SCREENER_HOME +  File.separator + exchange +  File.separator + StockConstants.BHAV_COPY_DOWNLOAD_FOLDER + File.separator+bhavCopyFile;
+	 }
 	FileOutputStream fileOutputStream =null;
 	File downloadFile = new File(absFilePath);
 	SyncData dataObj = new SyncData();
@@ -90,7 +96,7 @@ private boolean register404(URL bhavUrl) {
 	return returnValue;
 }
 
-public String unzipBhavCopy(String zippedBhavCopyFile) throws SQLException {
+public String unzipBhavCopy(String zippedBhavCopyFile, String exchange) throws SQLException {
 	byte[] buffer = new byte[1024];
 	FileInputStream fis;
 	String unzippedFileName = null;
@@ -100,7 +106,13 @@ public String unzipBhavCopy(String zippedBhavCopyFile) throws SQLException {
         fis = new FileInputStream(zippedBhavCopyFile);
         ZipInputStream zis = new ZipInputStream(fis);
         ZipEntry ze = zis.getNextEntry();
-        String opDir = StockConstants.STOCK_SCREENER_HOME + StockConstants.BHAV_COPY_FOLDER+  File.separator;
+        String opDir = null;
+        if(exchange.equals(StockConstants.NSE_EXCHANGE)) {
+        		opDir = StockConstants.STOCK_SCREENER_HOME + StockConstants.BHAV_COPY_FOLDER+  File.separator;
+        }
+        else if(exchange.equals(StockConstants.BSE_EXCHANGE)) {
+        	    opDir = StockConstants.STOCK_SCREENER_HOME + File.separator + exchange + File.separator + StockConstants.BHAV_COPY_FOLDER+  File.separator;
+        }
         while(ze != null){
             String fileName = ze.getName();
             unzippedFileName = opDir+ fileName;
@@ -143,9 +155,9 @@ public static void main (String args[]) throws SQLException {
 	Downloader downloadObj = new Downloader();
 	while (oldDate.before(currentDate)) {
 		try {
-			String downloadedFile = downloadObj.downloadBhavCopy(new java.util.Date(oldDate.getTimeInMillis()));
+			String downloadedFile = downloadObj.downloadBhavCopy(new java.util.Date(oldDate.getTimeInMillis()),"BSE");
 			if(downloadedFile != null) {
-				System.out.println(downloadObj.unzipBhavCopy (downloadedFile) +  " unzipped");
+				System.out.println(downloadObj.unzipBhavCopy (downloadedFile,"BSE") +  " unzipped");
 			}
 			oldDate.add(Calendar.DAY_OF_YEAR, 1);
 		} catch (IOException e) {
