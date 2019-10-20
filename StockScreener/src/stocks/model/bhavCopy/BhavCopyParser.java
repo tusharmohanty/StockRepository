@@ -20,7 +20,7 @@ public class BhavCopyParser {
 	public List<StockDataBean> parseBhavCopy(List<String> stockList, Calendar dateObj, String exchange) throws IOException {
 		String unzippedBhavCopyFile ="";
 		if (exchange.equals(StockConstants.NSE_EXCHANGE)) {
-			unzippedBhavCopyFile = StockConstants.STOCK_SCREENER_HOME + StockConstants.BHAV_COPY_FOLDER + File.separator +  NetworkUtils.getUnzippedBhavCopy(new java.util.Date(dateObj.getTimeInMillis()), exchange);
+			unzippedBhavCopyFile = StockConstants.STOCK_SCREENER_HOME +  File.separator +StockConstants.BHAV_COPY_FOLDER + File.separator +  NetworkUtils.getUnzippedBhavCopy(new java.util.Date(dateObj.getTimeInMillis()), exchange);
 		}
 		else if (exchange.equals(StockConstants.BSE_EXCHANGE)){
 			unzippedBhavCopyFile = StockConstants.STOCK_SCREENER_HOME + File.separator + exchange + File.separator + StockConstants.BHAV_COPY_FOLDER + File.separator +  NetworkUtils.getUnzippedBhavCopy(new java.util.Date(dateObj.getTimeInMillis()),exchange);	

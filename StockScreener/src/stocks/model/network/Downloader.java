@@ -108,7 +108,7 @@ public String unzipBhavCopy(String zippedBhavCopyFile, String exchange) throws S
         ZipEntry ze = zis.getNextEntry();
         String opDir = null;
         if(exchange.equals(StockConstants.NSE_EXCHANGE)) {
-        		opDir = StockConstants.STOCK_SCREENER_HOME + StockConstants.BHAV_COPY_FOLDER+  File.separator;
+        		opDir = StockConstants.STOCK_SCREENER_HOME + File.separator+ StockConstants.BHAV_COPY_FOLDER+  File.separator;
         }
         else if(exchange.equals(StockConstants.BSE_EXCHANGE)) {
         	    opDir = StockConstants.STOCK_SCREENER_HOME + File.separator + exchange + File.separator + StockConstants.BHAV_COPY_FOLDER+  File.separator;
