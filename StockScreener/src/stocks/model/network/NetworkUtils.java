@@ -6,23 +6,36 @@ import java.text.SimpleDateFormat;
 import stocks.model.StockConstants;
 
 public class NetworkUtils {
-public String getBhavUrl(java.util.Date dateObj, String exchange) {
+public static String getBhavUrl(java.util.Date dateObj, String exchange) {
 	String returnString ="";
 	if(exchange.equals(StockConstants.NSE_EXCHANGE)) {
-		returnString = StockConstants.NSE_BHAV_COPY_URL+ getBhavCopyFile(dateObj, exchange);
+		returnString = StockConstants.NSE_BHAV_COPY_URL+ getNetworkPrefix(dateObj, exchange) + getBhavCopyFile(dateObj, exchange);
 	}
 	else if (exchange.equals(StockConstants.BSE_EXCHANGE)) {
 		returnString = StockConstants.BSE_BHAV_COPY_URL + getBhavCopyFile(dateObj, exchange);
 	}
 	return returnString;
 }
-
+private static String getNetworkPrefix (java.util.Date dateObj, String exchange) {
+	DateFormat yearFormat = new SimpleDateFormat("YYYY");
+	DateFormat monthFormat = new SimpleDateFormat("MMM");
+	DateFormat dateFormat = new SimpleDateFormat("dd");
+	String year = yearFormat.format(dateObj);
+	String month = monthFormat.format(dateObj).toUpperCase();
+	String strDate = dateFormat.format(dateObj);
+	return year + StockConstants.URLSEPERATOR +month+ StockConstants.URLSEPERATOR;
+}
 public static String getBhavCopyFile (java.util.Date dateObj, String exchange) {
 	String returnValue = "";
-	DateFormat dateFormat = new SimpleDateFormat("ddMMyy");
+	DateFormat dateFormat = new SimpleDateFormat("dd");
+	
 	String strDate = dateFormat.format(dateObj);
 	if(exchange.equals(StockConstants.NSE_EXCHANGE)) {
-		returnValue = "PR" + strDate  +".zip";
+		DateFormat yearFormat = new SimpleDateFormat("YYYY");
+		DateFormat monthFormat = new SimpleDateFormat("MMM");
+		String year = yearFormat.format(dateObj);
+		String month = monthFormat.format(dateObj).toUpperCase();
+		returnValue =   "cm" + strDate  + month + year+	"bhav.csv.zip";
 	}
 	else if(exchange.equals(StockConstants.BSE_EXCHANGE)) {
 		returnValue = "EQ" + strDate + "_CSV.ZIP";
@@ -32,15 +45,25 @@ public static String getBhavCopyFile (java.util.Date dateObj, String exchange) {
 
 public static String getUnzippedBhavCopy(java.util.Date dateObj, String exchange) {
 	String returnValue = "";
-	DateFormat dateFormat = new SimpleDateFormat("ddMMyy");
+	DateFormat dateFormat = new SimpleDateFormat("dd");
 	String strDate = dateFormat.format(dateObj);
 	if(exchange.equals(StockConstants.NSE_EXCHANGE)) {
-		returnValue = "Pd" + strDate  +".csv";
+		DateFormat yearFormat = new SimpleDateFormat("YYYY");
+		DateFormat monthFormat = new SimpleDateFormat("MMM");
+		String year = yearFormat.format(dateObj);
+		String month = monthFormat.format(dateObj).toUpperCase();
+		returnValue = "cm" + strDate  + month + year+	"bhav.csv";
 	}
 	else if(exchange.equals(StockConstants.BSE_EXCHANGE)) {
 		returnValue = "EQ" + strDate + ".CSV";
 	}
     
     return returnValue;
+}
+
+public static void main (String args[]) {
+	System.out.println(NetworkUtils.getBhavUrl(new java.util.Date(), "NSE"));
+	
+	
 }
 }

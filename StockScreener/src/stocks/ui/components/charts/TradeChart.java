@@ -140,7 +140,7 @@ public void refreshDataSet() {
 
 private void getMainDataSet() {
 	
-	for(int tempCount=0; tempCount < 100;tempCount++) {
+	for(int tempCount=0; tempCount < 100 && stockData.size() >0;tempCount++) {
 		StockDataBean beanObj = stockData.get(tempCount);
 		Day dayObj = new Day(beanObj.getDateObj().get(Calendar.DATE),
 		          beanObj.getDateObj().get(Calendar.MONTH) + 1, 

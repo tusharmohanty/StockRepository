@@ -52,6 +52,7 @@ public String downloadBhavCopy(java.util.Date dateObject, String exchange) throw
 				}
 				else {                                                                // if its not a holiday download the file
 					ReadableByteChannel readableByteChannel = null;
+					System.out.println(bhavUrl);
 					readableByteChannel= Channels.newChannel(bhavUrl.openStream());
 					fileOutputStream = new FileOutputStream(absFilePath);
 					FileChannel fileChannel = fileOutputStream.getChannel();
@@ -80,6 +81,8 @@ private boolean register404(URL bhavUrl) {
 	URLConnection conn= null;
 	try {
 		conn = bhavUrl.openConnection();
+		conn.setConnectTimeout(5000);
+		conn.setReadTimeout(5000);
 		conn.getInputStream();
 	}
 	catch (IOException ex) {
@@ -91,6 +94,7 @@ private boolean register404(URL bhavUrl) {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			returnValue = true;
 		}
 	}
 	return returnValue;

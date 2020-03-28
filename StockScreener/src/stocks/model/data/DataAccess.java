@@ -10,6 +10,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
 
+import stocks.model.beans.PositionBean;
 import stocks.model.beans.StockDataBean;
 import stocks.model.beans.StocksBean;
 
@@ -82,5 +83,37 @@ public List <StockDataBean> getStockData(String stockCode) throws SQLException{
 		conn.close();
 	}
 	return stockDataList;
+}
+
+public List <PositionBean> getPositionData(String stockCode) throws SQLException{
+	List <PositionBean> positionDataList = new ArrayList<PositionBean>();
+	Connection conn= DBTxn.INSTANCE.DS.getConnection();
+	PreparedStatement stmt = null;
+	ResultSet rs = null;
+	boolean latestValue = true;
+	try {
+		stmt = conn.prepareStatement("Select p.stock_code, p.txn_date, p.price ,p.qty,p.txn_type from positions p, stock_data s where s.stock_code = p.stock_code "
+				                   + "and s.stock_code = ? and trunc(s.TXN_DATE) =(select trunc(max(txn_date)) from stock_data where stock_code = ?) ");
+		stmt.setString(1, stockCode);
+		stmt.setString(2, stockCode);
+		rs = stmt.executeQuery();
+		while(rs.next()) {
+			PositionBean beanObj = new PositionBean();
+			beanObj.setStockCode(stockCode);
+			Calendar calObj = new GregorianCalendar();
+			beanObj.setTxnDate(rs.getDate("txn_Date"));
+			beanObj.setPrice(rs.getDouble("price"));
+			beanObj.setQty(rs.getInt("qty"));
+			beanObj.setTxnType(rs.getString("txn_type"));
+			
+			positionDataList.add(beanObj);
+		}
+	}
+	finally {
+		rs.close();
+		stmt.close();
+		conn.close();
+	}
+	return positionDataList;
 }
 }

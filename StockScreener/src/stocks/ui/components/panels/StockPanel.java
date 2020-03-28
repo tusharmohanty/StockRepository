@@ -6,12 +6,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import stocks.model.beans.PositionBean;
 import stocks.model.beans.StockDataBean;
 import stocks.model.beans.StocksBean;
 import stocks.model.data.DataAccess;
@@ -52,15 +54,19 @@ public void actionPerformed(ActionEvent e) {
         	   String scripCode = selectedStock.getStockCode();
                 //setModel(selectedStock.getStockSymbol());
         	   List <StockDataBean> stockData = null;
+        	   List <PositionBean> positionData = null;
         	   try {
         		   stockData = DataAccess.INSTANCE.getStockData(scripCode);
+        		   positionData = DataAccess.INSTANCE.getPositionData(scripCode);
         		   MainPriceChart.INSTANCE.stockData = stockData;
+        		   MainPriceChart.INSTANCE.positionData= positionData;
         		   MainPriceChart.INSTANCE.refreshDataSet();
         		   TradeChart.INSTANCE.stockData = stockData;
         		   TradeChart.INSTANCE.refreshDataSet();
         		   BasicInfoPanel.INSTANCE.data[0][1]= new DecimalFormat("##.##").format(DataAccess.INSTANCE.latestValue*0.002);
         		   BasicInfoPanel.INSTANCE.data[1][1]= new DecimalFormat("##.##").format(DataAccess.INSTANCE.latestValue*1.002);
-        		   
+        		   OpenPositionPanel.INSTANCE.openPositions = positionData;
+        		   OpenPositionPanel.INSTANCE.table.repaint();
         		   BasicInfoPanel.INSTANCE.table.repaint();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block

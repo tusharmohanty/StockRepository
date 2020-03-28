@@ -57,17 +57,17 @@ public class BhavCopyParser {
 	
 	private StockDataBean parseNseData(List<String> stockList, String[] data,Calendar dateObj) {
 		  StockDataBean beanObj= null;
-		if(data[0].equals("N") && data[1].equals("EQ")) {  // first csv value is N and second EQ
+		if(data[1].equals("EQ")) {  // first csv value is EQ 
 	    	   // System.out.println(data[2]);
-	    	    if(stockList.contains(data[2])) {
+	    	    if(stockList.contains(data[0])) {
 	    	    	   beanObj = new StockDataBean();
-	    	    	   beanObj.setStockCode(data[2]);
+	    	    	   beanObj.setStockCode(data[0]);
 	    	    	   beanObj.setDateObj(dateObj);
-	    	    	   beanObj.setOpen(Double.parseDouble(data[5]));
-	    	       beanObj.setHigh(Double.parseDouble(data[6]));
-	    	       beanObj.setLow(Double.parseDouble(data[7]));
-	    	    	   beanObj.setClose(Double.parseDouble(data[8]));
-	    	    	   beanObj.setVolume(Long.parseLong(data[10]));
+	    	    	   beanObj.setOpen(Double.parseDouble(data[2]));
+	    	       beanObj.setHigh(Double.parseDouble(data[3]));
+	    	       beanObj.setLow(Double.parseDouble(data[4]));
+	    	    	   beanObj.setClose(Double.parseDouble(data[5]));
+	    	    	   beanObj.setVolume(Long.parseLong(data[11]));
 	    	    }
 	    }
 	return beanObj;

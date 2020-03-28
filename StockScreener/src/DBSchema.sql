@@ -51,5 +51,8 @@ create table stats(
   txn_date   Date NOT NULL,
   sma_16     NUMBER(18,2),
   sma_26     NUMBER(18,2),
+  ema_16     NUMBER(18,2),
+  ema_26     NUMBER(18,2),
+  macd       NUMBER(18,2)
   CONSTRAINT stats_pk PRIMARY KEY (stock_code,txn_date)
 )

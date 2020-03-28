@@ -140,21 +140,25 @@ public void syncData() throws SQLException, IOException {
 	for(Map.Entry<StockCalendar,List<String>> entry :NSEMasterSyncList.entrySet()) {
 		StockCalendar dateObj = entry.getKey();
 		List<String> stockStringlist = entry.getValue();
-		boolean unzipResult = downLoadAndUnzipBhavCopy(new java.util.Date(dateObj.getTimeInMillis()),StockConstants.NSE_EXCHANGE);
-		
-		if(unzipResult ) {
-			List<StockDataBean> dataObj= parserObj.parseBhavCopy(stockStringlist, dateObj,StockConstants.NSE_EXCHANGE);
-			persistData(dataObj);
+		if(!isHoliday(new java.sql.Date(dateObj.getTimeInMillis()))) {
+			boolean unzipResult = downLoadAndUnzipBhavCopy(new java.util.Date(dateObj.getTimeInMillis()),StockConstants.NSE_EXCHANGE);
+			
+			if(unzipResult ) {
+				List<StockDataBean> dataObj= parserObj.parseBhavCopy(stockStringlist, dateObj,StockConstants.NSE_EXCHANGE);
+				persistData(dataObj);
+			}
 		}
 	}
 	for(Map.Entry<StockCalendar,List<String>> entry :BSEMasterSyncList.entrySet()) {
 		StockCalendar dateObj = entry.getKey();
 		List<String> stockStringlist = entry.getValue();
-		boolean unzipResult = downLoadAndUnzipBhavCopy(new java.util.Date(dateObj.getTimeInMillis()), StockConstants.BSE_EXCHANGE);
-		
-		if(unzipResult ) {
-			List<StockDataBean> dataObj= parserObj.parseBhavCopy(stockStringlist, dateObj, StockConstants.BSE_EXCHANGE);
-			persistData(dataObj);
+		if(!isHoliday(new java.sql.Date(dateObj.getTimeInMillis()))) {
+			boolean unzipResult = downLoadAndUnzipBhavCopy(new java.util.Date(dateObj.getTimeInMillis()), StockConstants.BSE_EXCHANGE);
+			
+			if(unzipResult ) {
+				List<StockDataBean> dataObj= parserObj.parseBhavCopy(stockStringlist, dateObj, StockConstants.BSE_EXCHANGE);
+				persistData(dataObj);
+			}
 		}
 	}
 }
@@ -163,6 +167,7 @@ public void syncData() throws SQLException, IOException {
 //persist parser data
 
 private boolean downLoadAndUnzipBhavCopy(java.util.Date dateObj, String exchange) throws IOException, SQLException {
+
 	boolean returnValue = true;
 	Downloader downloaderObj = new Downloader();
 	String downloadedFile = downloaderObj.downloadBhavCopy(dateObj, exchange);
@@ -202,7 +207,7 @@ public boolean isHoliday(java.sql.Date dateObject) throws SQLException {
 	Connection conn= DBTxn.INSTANCE.DS.getConnection();
 	PreparedStatement stmt = null;
 	try {
-		stmt = conn.prepareStatement("select 1 from  holiday_list where holiday= ? ");
+		stmt = conn.prepareStatement("select 1 from  holiday_list where trunc(holiday)= trunc(?) ");
 		stmt.setDate(1, dateObject);
 		ResultSet rs =stmt.executeQuery();
 		while(rs.next()) {
@@ -221,8 +226,12 @@ public void registerHoliday(java.sql.Date dateObject) throws SQLException {
 	Connection conn= DBTxn.INSTANCE.DS.getConnection();
 	PreparedStatement stmt = null;
 	try {
-			stmt = conn.prepareStatement("merge  into  holiday_list a using (select holiday from holiday_list ) b on (a.holiday= b.holiday) when not matched then insert (holiday) values (?) ");
+			stmt = conn.prepareStatement("insert into holiday_list select ? from dual " + 
+					" where not exists(select 1 " + 
+					"                 from holiday_list " + 
+					"                 where (holiday =?))");
 			stmt.setDate(1, dateObject);
+			stmt.setDate(2, dateObject);
 						stmt.executeUpdate();
 		   // conn.commit();
 		
