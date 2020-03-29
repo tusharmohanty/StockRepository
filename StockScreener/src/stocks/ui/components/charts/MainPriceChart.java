@@ -18,6 +18,7 @@ import org.jfree.chart.axis.AxisLocation;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.labels.CrosshairLabelGenerator;
 import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.panel.CrosshairOverlay;
 import org.jfree.chart.plot.XYPlot;
@@ -129,7 +130,14 @@ private  void initializeChart() {
     this.xCrosshair = new Crosshair(Double.NaN, Color.WHITE, new BasicStroke(0.5f));
     this.xCrosshair.setLabelVisible(true);
     this.xCrosshair.setLabelBackgroundPaint(Color.WHITE);
+    this.xCrosshair.setLabelGenerator(new CrosshairLabelGenerator () {
+        @Override
+        public String generateLabel(Crosshair crshr) {
+            String converted = new SimpleDateFormat("dd-MMM-YYYY").format(crshr.getValue());   
+            return converted;
+        }
     
+    });
     crosshairOverlay.addDomainCrosshair(xCrosshair);
     this.yCrosshairs = new Crosshair[SERIES_COUNT];
     

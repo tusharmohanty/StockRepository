@@ -44,6 +44,53 @@ public List <StocksBean> getStockList() throws SQLException{
 	return stockList;
 }
 
+public List <StocksBean> getPortfolioStockList() throws SQLException{
+	List <StocksBean> stockList = new ArrayList<StocksBean>();
+	Connection conn= DBTxn.INSTANCE.DS.getConnection();
+	Statement stmt = null;
+	ResultSet rs = null;
+	try {
+		stmt = conn.createStatement();
+		rs = stmt.executeQuery("select s.STOCK_CODE, s.stock_name, s.exchange,SUM((p.price * p.qty)) as value from stocks s , positions p where s.STOCK_CODE= p.STOCK_CODE and p.status = 'A' group by s.stock_code, s.stock_name,s.exchange order by value desc");
+		while(rs.next()) {
+			StocksBean beanObj = new StocksBean();
+			beanObj.setStockCode(rs.getString("stock_Code"));
+			beanObj.setStockName(rs.getString("stock_name"));
+			beanObj.setExchange(rs.getString("exchange"));
+			stockList.add(beanObj);
+		}
+	}
+	finally {
+		rs.close();
+		stmt.close();
+		conn.close();
+	}
+	return stockList;
+}
+public List <StocksBean> getWatchListStockList() throws SQLException{
+	List <StocksBean> stockList = new ArrayList<StocksBean>();
+	Connection conn= DBTxn.INSTANCE.DS.getConnection();
+	Statement stmt = null;
+	ResultSet rs = null;
+	try {
+		stmt = conn.createStatement();
+		rs = stmt.executeQuery("select s.STOCK_CODE, s.stock_name, s.exchange  from stocks s where s.STOCK_CODE not in (select stock_code from positions where status = 'A' )");
+		while(rs.next()) {
+			StocksBean beanObj = new StocksBean();
+			beanObj.setStockCode(rs.getString("stock_Code"));
+			beanObj.setStockName(rs.getString("stock_name"));
+			beanObj.setExchange(rs.getString("exchange"));
+			stockList.add(beanObj);
+		}
+	}
+	finally {
+		rs.close();
+		stmt.close();
+		conn.close();
+	}
+	return stockList;
+}
+
 
 public List <StockDataBean> getStockData(String stockCode) throws SQLException{
 	List <StockDataBean> stockDataList = new ArrayList<StockDataBean>();
