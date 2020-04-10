@@ -11,7 +11,7 @@ import stocks.model.beans.PositionBean;
 import stocks.ui.components.panels.OpenPositionPanel;
 
 public class PositionTableModel extends AbstractTableModel{
-	private String[] columnNames = {"Date","Buy price","Qty","Gain/Loss %"};
+	private String[] columnNames = {"Date","Price","Qty","B/S","Gain/Loss %"};
 	
 	public int getColumnCount() {
 	      return columnNames.length;
@@ -40,7 +40,7 @@ public class PositionTableModel extends AbstractTableModel{
 		    		returnValue = data.getQty() +"";
 		    	}
 		    	else if (col ==3) {
-		    		returnValue = "";
+		    		returnValue = data.getTxnType();
 		    	}
 		    	return returnValue;
 	    }

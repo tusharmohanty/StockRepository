@@ -4,6 +4,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
@@ -22,7 +23,9 @@ import org.jfree.chart.labels.CrosshairLabelGenerator;
 import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.panel.CrosshairOverlay;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.CandlestickRenderer;
 import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
+import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.ui.RectangleAnchor;
@@ -31,9 +34,15 @@ import org.jfree.data.general.DatasetUtils;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.data.time.TimeSeriesDataItem;
+import org.jfree.data.time.ohlc.OHLCItem;
+import org.jfree.data.time.ohlc.OHLCSeries;
+import org.jfree.data.time.ohlc.OHLCSeriesCollection;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.chart.ui.RectangleInsets;
+import org.jfree.chart.plot.CombinedDomainXYPlot;
 import org.jfree.chart.plot.Crosshair;
+import org.jfree.chart.plot.PlotOrientation;
 
 import stocks.model.beans.PositionBean;
 import stocks.model.beans.StockDataBean;
@@ -49,8 +58,11 @@ private Crosshair xCrosshair;
 private Crosshair[] yCrosshairs;
 public List<StockDataBean> stockData = null;
 public List<PositionBean> positionData = null;
-
+private TimeSeries volumeSeries;
 public static final MainPriceChart INSTANCE = new MainPriceChart();
+TimeSeries priceSeries ;
+TimeSeries buyPositionSeries;
+TimeSeries sellPositionSeries;
 
 private MainPriceChart() {
 	// Get all teh data first
@@ -62,20 +74,182 @@ private MainPriceChart() {
 	e.printStackTrace();
    }
 	// get the main chart sorted 
-	mainChart = ChartFactory.createTimeSeriesChart(null, null, null, getMainDataSet(), false, false,false);
+	mainChart = createMainChart();
 	chartPanel = new ChartPanel(mainChart);
-	initializeChart();
 	chartPanel.setPreferredSize(new java.awt.Dimension(2200, 1200));
+	
+	//initializeMainChart();
 	//chartPanel.setMouseZoomable(true, false);
 	
 }
 
 public void refreshDataSet() {
 	XYPlot plot = (XYPlot) mainChart.getPlot();
-	plot.setDataset(0,getMainDataSet());
-	plot.setDataset(1,getEarningsDataSet());
+	volumeSeries.clear();
+	priceSeries.clear();
+	sellPositionSeries.clear();
+	for(int tempCount=0; tempCount < 100 && stockData.size() >0;tempCount++) {
+		StockDataBean beanObj = stockData.get(tempCount);
+		Day dayObj = new Day(beanObj.getDateObj().get(Calendar.DATE),
+		          beanObj.getDateObj().get(Calendar.MONTH) + 1, 
+		          beanObj.getDateObj().get(Calendar.YEAR));
+		priceSeries.add(dayObj,beanObj.getClose());
+		volumeSeries.add(new TimeSeriesDataItem(dayObj,beanObj.getVolume()));
+		buyPositionSeries.clear();
+	}
+	for(int tempCount=0; tempCount < positionData.size();tempCount++) {
+		PositionBean beanObj = positionData.get(tempCount);
+		if(beanObj.getTxnType().equals("B")){
+			Calendar calObj = Calendar.getInstance();
+			calObj.setTime(beanObj.getTxnDate());
+			Day dayObj = new Day(calObj.get(Calendar.DATE),
+			                     calObj.get(Calendar.MONTH) + 1, 
+			                     calObj.get(Calendar.YEAR));
+			buyPositionSeries.addOrUpdate(dayObj,beanObj.getPrice());
+		}
+	}
+	for(int tempCount=0; tempCount < positionData.size();tempCount++) {
+		PositionBean beanObj = positionData.get(tempCount);
+		if(beanObj.getTxnType().equals("S")){
+			Calendar calObj = Calendar.getInstance();
+			calObj.setTime(beanObj.getTxnDate());
+			Day dayObj = new Day(calObj.get(Calendar.DATE),
+			                     calObj.get(Calendar.MONTH) + 1, 
+			                     calObj.get(Calendar.YEAR));
+			sellPositionSeries.add(dayObj,beanObj.getPrice());
+		}
+	}
 }
 
+private XYLineAndShapeRenderer getPricePlotRenderer() {
+	XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+    renderer.setSeriesLinesVisible(0, true);     //price data is displayed as a line
+    renderer.setSeriesLinesVisible(1, false);     // earnings data is displayed as a line 
+    renderer.setSeriesLinesVisible(2, false);   // position data is displayed as a dot
+    renderer.setSeriesShapesVisible(0, false);
+    renderer.setSeriesShapesVisible(1, true);
+    renderer.setSeriesShapesVisible(2, true);
+    renderer.setSeriesFillPaint(1, ChartColor.LIGHT_GREEN,true);
+    renderer.setSeriesFillPaint(2, ChartColor.LIGHT_GREEN,true);
+    renderer.setSeriesPaint(1, ChartColor.LIGHT_GREEN, true);
+    renderer.setSeriesPaint(2, ChartColor.LIGHT_MAGENTA, true);
+    renderer.setSeriesShapesVisible(2, true);
+    renderer.setDefaultToolTipGenerator(new StandardXYToolTipGenerator());
+    renderer.setDefaultEntityRadius(6);
+    return renderer;
+}
+
+private JFreeChart createMainChart() {
+	NumberAxis priceAxis = new NumberAxis("Price");
+	priceAxis.setAutoRangeIncludesZero(false);
+	XYLineAndShapeRenderer renderer =getPricePlotRenderer();
+	// Create price subplot
+	TimeSeriesCollection priceDataSet = new TimeSeriesCollection();
+	priceSeries = new TimeSeries("Price");
+	buyPositionSeries = new TimeSeries ("Buy");
+	sellPositionSeries = new TimeSeries ("Sell");
+	priceDataSet.addSeries(priceSeries);
+	priceDataSet.addSeries(buyPositionSeries);
+	priceDataSet.addSeries(sellPositionSeries);
+	XYPlot priceSubplot = new XYPlot(priceDataSet , null, priceAxis, renderer);
+	priceSubplot.setBackgroundPaint(Color.black);
+	priceSubplot.setDomainPannable(true);
+	priceSubplot.setRangePannable(true);
+	priceSubplot.setInsets(new RectangleInsets(5.0, 5.0, 5.0, 5.0));
+	priceSubplot.setBackgroundPaint(Color.BLACK);
+	priceSubplot.setDomainGridlinePaint(Color.white);
+	priceSubplot.setRangeGridlinePaint(Color.white);
+	priceSubplot.setDomainCrosshairVisible(true);
+	priceSubplot.setRangeCrosshairVisible(true);
+	priceSubplot.setRenderer(renderer);
+	
+	//AXIS 2
+    NumberAxis axis2 = new NumberAxis("Earnings");
+    axis2.setAutoRangeIncludesZero(false);
+    priceSubplot.setRangeAxis(1, axis2);
+    priceSubplot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_LEFT);
+    
+    priceSubplot.setDataset(1, getEarningsDataSet());
+    priceSubplot.mapDatasetToRangeAxis(1, 1);
+    XYItemRenderer renderer2 = new StandardXYItemRenderer();
+    priceSubplot.setRenderer(1, renderer2);
+ 
+    
+    
+
+	
+	/**
+	 * Creating volume subplot
+	 */
+	// creates TimeSeriesCollection as a volume dataset for volume chart
+	TimeSeriesCollection volumeDataset = new TimeSeriesCollection();
+	volumeSeries = new TimeSeries("Volume");
+	volumeDataset.addSeries(volumeSeries);
+	// Create volume chart volumeAxis
+	NumberAxis volumeAxis = new NumberAxis("Volume");
+	volumeAxis.setAutoRangeIncludesZero(false);
+	// Set to no decimal
+	volumeAxis.setNumberFormatOverride(new DecimalFormat("0"));
+	// Create volume chart renderer
+	XYBarRenderer timeRenderer = new XYBarRenderer();
+	timeRenderer.setShadowVisible(false);
+	//timeRenderer.setBaseToolTipGenerator(new StandardXYToolTipGenerator("Volume--> Time={1} Size={2}",
+	//		new SimpleDateFormat("kk:mm"), new DecimalFormat("0")));
+	// Create volumeSubplot
+	XYPlot volumeSubplot = new XYPlot(volumeDataset, null, volumeAxis, timeRenderer);
+	volumeSubplot.setBackgroundPaint(Color.white);
+	/**
+	 * Create chart main plot with two subplots (candlestickSubplot,
+	 * volumeSubplot) and one common dateAxis
+	 */
+	// Creating charts common dateAxis
+	DateAxis dateAxis = new DateAxis("Time");
+	dateAxis.setDateFormatOverride(new SimpleDateFormat("dd-MM-yyyy"));
+	// reduce the default left/right margin from 0.05 to 0.02
+	dateAxis.setLowerMargin(0.02);
+	dateAxis.setUpperMargin(0.02);
+	// Create mainPlot
+	CombinedDomainXYPlot mainPlot = new CombinedDomainXYPlot(dateAxis);
+	mainPlot.setGap(10.0);
+	mainPlot.add(priceSubplot, 3);
+	mainPlot.add(volumeSubplot, 1);
+	mainPlot.setOrientation(PlotOrientation.VERTICAL);
+
+	JFreeChart chart = new JFreeChart(null, JFreeChart.DEFAULT_TITLE_FONT, mainPlot, true);
+	chart.removeLegend();
+	return chart;
+
+}
+
+private  void initializeMainChart() {
+    CrosshairOverlay crosshairOverlay = new CrosshairOverlay();
+    this.xCrosshair = new Crosshair(Double.NaN, Color.WHITE, new BasicStroke(0.5f));
+    this.xCrosshair.setLabelVisible(true);
+    this.xCrosshair.setLabelBackgroundPaint(Color.WHITE);
+    this.xCrosshair.setLabelGenerator(new CrosshairLabelGenerator () {
+        @Override
+        public String generateLabel(Crosshair crshr) {
+            String converted = new SimpleDateFormat("dd-MMM-YYYY").format(crshr.getValue());   
+            return converted;
+        }
+    
+    });
+    crosshairOverlay.addDomainCrosshair(xCrosshair);
+    this.yCrosshairs = new Crosshair[SERIES_COUNT];
+    
+    
+    for (int i = 0; i < SERIES_COUNT; i++) {
+        this.yCrosshairs[i] = new Crosshair(Double.NaN, Color.WHITE, new BasicStroke(0.5f));
+        this.yCrosshairs[i].setLabelVisible(true);
+        if (i % 2 != 0) {
+            this.yCrosshairs[i].setLabelAnchor(RectangleAnchor.TOP_RIGHT);
+        }
+        crosshairOverlay.addRangeCrosshair(yCrosshairs[i]);
+    }
+    this.yCrosshairs[0].setLabelBackgroundPaint(Color.WHITE);
+    chartPanel.addOverlay(crosshairOverlay);
+    this.chartPanel.addChartMouseListener(this);
+}
 private  void initializeChart() {
 	getMainDataSet();
 	XYPlot plot = (XYPlot) mainChart.getPlot();
