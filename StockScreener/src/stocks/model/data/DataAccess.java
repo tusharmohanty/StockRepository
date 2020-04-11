@@ -10,6 +10,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
 
+import stocks.model.beans.AlertBean;
 import stocks.model.beans.PositionBean;
 import stocks.model.beans.StockDataBean;
 import stocks.model.beans.StocksBean;
@@ -91,6 +92,58 @@ public List <StocksBean> getWatchListStockList() throws SQLException{
 	return stockList;
 }
 
+
+public List <StocksBean> getBuyStockList() throws SQLException{
+	List <StocksBean> stockList = new ArrayList<StocksBean>();
+	Connection conn= DBTxn.INSTANCE.DS.getConnection();
+	Statement stmt = null;
+	ResultSet rs = null;
+	try {
+		stmt = conn.createStatement();
+		rs = stmt.executeQuery("select s.stock_code,s.stock_name, s.exchange ,a.stock_code,d.close,a.alert_price*(1-a.threshold/100) as lower_limit , a.alert_price*(1+a.threshold/100) as upper_limit, (d.close-(a.alert_price*(1+a.threshold/100)))/d.close as gap from stocks s, stock_alerts a, stock_data d where s.stock_code = a.stock_code and a.ALERT_TYPE = 'BUY' and a.STOCK_CODE = d.STOCK_CODE and trunc(d.txn_date) = (select max(trunc(txn_date)) from stock_data where stock_code = a.stock_code) order by gap ");
+		while(rs.next()) {
+			StocksBean beanObj = new StocksBean();
+			beanObj.setStockCode(rs.getString("stock_Code"));
+			beanObj.setStockName(rs.getString("stock_name"));
+			beanObj.setExchange(rs.getString("exchange"));
+			stockList.add(beanObj);
+		}
+	}
+	finally {
+		rs.close();
+		stmt.close();
+		conn.close();
+	}
+	return stockList;
+}
+
+public List <AlertBean> getAlertList(String stockCode) throws SQLException{
+	List <AlertBean> alertList = new ArrayList<AlertBean>();
+	Connection conn= DBTxn.INSTANCE.DS.getConnection();
+	PreparedStatement stmt = null;
+	ResultSet rs = null;
+	try {
+		stmt = conn.prepareStatement("select a.STOCK_CODE, a.alert_type, a.threshold, a.comments,a.alert_price,a.alert_date  from stock_alerts a where a.STOCK_CODE = ?");
+		stmt.setString(1, stockCode);
+		rs = stmt.executeQuery();
+		while(rs.next()) {
+			AlertBean beanObj = new AlertBean();
+			beanObj.setStockCode(rs.getString("stock_Code"));
+			beanObj.setAlertType(rs.getString("alert_type"));
+			beanObj.setComments(rs.getString("comments"));
+			beanObj.setThreshold(rs.getDouble("threshold"));
+			beanObj.setAlertPrice(rs.getDouble("alert_price"));
+			beanObj.setAlertDate(rs.getDate("alert_date"));
+			alertList.add(beanObj);
+		}
+	}
+	finally {
+		rs.close();
+		stmt.close();
+		conn.close();
+	}
+	return alertList;
+}
 
 public List <StockDataBean> getStockData(String stockCode) throws SQLException{
 	List <StockDataBean> stockDataList = new ArrayList<StockDataBean>();

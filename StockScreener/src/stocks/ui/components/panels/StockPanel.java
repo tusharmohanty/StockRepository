@@ -60,8 +60,9 @@ public void actionPerformed(ActionEvent e) {
         		   positionData = DataAccess.INSTANCE.getPositionData(scripCode);
         		   MainPriceChart.INSTANCE.stockData = stockData;
         		   MainPriceChart.INSTANCE.positionData= positionData;
-        		   MainPriceChart.INSTANCE.refreshDataSet();
         		   MainPriceChart.INSTANCE.selectedStock = scripCode;
+        		   MainPriceChart.INSTANCE.refreshDataSet();
+        		   
         		   TradeChart.INSTANCE.stockData = stockData;
         		   TradeChart.INSTANCE.refreshDataSet();
         		   BasicInfoPanel.INSTANCE.data[0][1]= new DecimalFormat("##.##").format(DataAccess.INSTANCE.latestValue*0.002);

@@ -2,6 +2,7 @@ package stocks.ui.components.charts;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.geom.Rectangle2D;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
@@ -16,6 +17,8 @@ import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.annotations.XYAnnotation;
+import org.jfree.chart.annotations.XYRangeValueAnnotation;
 import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.axis.AxisLocation;
 import org.jfree.chart.axis.DateAxis;
@@ -41,14 +44,15 @@ import org.jfree.data.time.ohlc.OHLCItem;
 import org.jfree.data.time.ohlc.OHLCSeries;
 import org.jfree.data.time.ohlc.OHLCSeriesCollection;
 import org.jfree.data.xy.XYDataset;
+import org.jfree.ui.TextAnchor;
 import org.jfree.chart.ui.RectangleInsets;
-import org.jfree.chart.ui.TextAnchor;
 import org.jfree.chart.plot.CombinedDomainXYPlot;
 import org.jfree.chart.plot.Crosshair;
 import org.jfree.chart.plot.Marker;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.ValueMarker;
 
+import stocks.model.beans.AlertBean;
 import stocks.model.beans.PositionBean;
 import stocks.model.beans.StockDataBean;
 import stocks.model.data.DataAccess;
@@ -71,6 +75,7 @@ TimeSeries priceSeries ;
 TimeSeries buyPositionSeries;
 TimeSeries sellPositionSeries;
 XYTextAnnotation a;
+XYPlot priceSubplot;
 private MainPriceChart() {
 	// Get all teh data first
 	try {
@@ -92,10 +97,13 @@ private MainPriceChart() {
 }
 
 public void refreshDataSet() {
-	XYPlot plot = (XYPlot) mainChart.getPlot();
 	volumeSeries.clear();
 	priceSeries.clear();
 	sellPositionSeries.clear();
+	List<XYAnnotation> allAnnotations = priceSubplot.getAnnotations();
+	for (int tempCount =0;tempCount < allAnnotations.size();tempCount++) {
+		priceSubplot.removeAnnotation(allAnnotations.get(tempCount));
+	}
 	for(int tempCount=0; tempCount < 100 && stockData.size() >0;tempCount++) {
 		StockDataBean beanObj = stockData.get(tempCount);
 		Day dayObj = new Day(beanObj.getDateObj().get(Calendar.DATE),
@@ -126,6 +134,43 @@ public void refreshDataSet() {
 			                     calObj.get(Calendar.YEAR));
 			sellPositionSeries.add(dayObj,beanObj.getPrice());
 		}
+	}
+	try {
+		List<AlertBean> alertList = DataAccess.INSTANCE.getAlertList(selectedStock);
+		for(int tempCount=0; tempCount < alertList.size();tempCount++) {
+			AlertBean beanObj = alertList.get(tempCount);
+			XYRangeValueAnnotation rva = new XYRangeValueAnnotation();
+	        rva.setValue(beanObj.getAlertPrice());
+	        rva.setLabel("Anno Test");
+	        Font f = new Font("Tahoma",1,12);
+	        rva.setLabelFont(f);
+	        rva.setStroke(new BasicStroke(3.0f));
+	        if(beanObj.getAlertType().equals("BUY")) {
+	        		rva.setPaint(Color.GREEN);
+	        }
+	        else if (beanObj.getAlertType().equals("SELL")) {
+	        		rva.setPaint(Color.RED);
+	        }
+	        else if (beanObj.getAlertType().equals("NEUTRAL")) {
+        			rva.setPaint(Color.YELLOW);
+	        }
+	        rva.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
+	        rva.setLabelAnchor(org.jfree.ui.RectangleAnchor.LEFT);
+	        rva.setToolTipText(beanObj.getComments());
+	        priceSubplot.addAnnotation(rva);
+
+			
+//			final Marker alertMarker = new ValueMarker(beanObj.getAlertPrice());
+//			alertMarker.setPaint(Color.green);
+//			
+//			alertMarker.setLabel("Bid Start Price");
+//			alertMarker.setLabelAnchor(RectangleAnchor.BOTTOM_RIGHT);
+//			alertMarker.setLabelTextAnchor(TextAnchor.TOP_RIGHT);
+//			priceSubplot.addRangeMarker(alertMarker);
+		}
+	} catch (SQLException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
 	}
 }
 
@@ -159,7 +204,7 @@ private JFreeChart createMainChart() {
 	priceDataSet.addSeries(priceSeries);
 	priceDataSet.addSeries(buyPositionSeries);
 	priceDataSet.addSeries(sellPositionSeries);
-	XYPlot priceSubplot = new XYPlot(priceDataSet , null, priceAxis, renderer);
+	priceSubplot = new XYPlot(priceDataSet , null, priceAxis, renderer);
 	priceSubplot.setBackgroundPaint(Color.black);
 	priceSubplot.setDomainPannable(true);
 	priceSubplot.setRangePannable(true);
@@ -412,7 +457,6 @@ private XYDataset getMainDataSet() {
  */
 @Override
 public void chartMouseMoved(ChartMouseEvent event) {
-	System.out.println("Moved mouse");
     Rectangle2D dataArea = this.chartPanel.getScreenDataArea();
     JFreeChart chart = event.getChart();
     CombinedDomainXYPlot plot = (CombinedDomainXYPlot) chart.getPlot();
@@ -420,9 +464,7 @@ public void chartMouseMoved(ChartMouseEvent event) {
     XYPlot pricePlot = (XYPlot) plot.getSubplots().get(0);
     double x = xAxis.java2DToValue(event.getTrigger().getX(), dataArea, 
             RectangleEdge.BOTTOM);
-    Calendar calObj = Utils.getxAxisCalendarValue(x);
-    
-    System.out.println("Moved mouse" );
+    Calendar calObj = Utils.getxAxisCalendarValue(x);  
     
     double y = DatasetUtils.findYValue(pricePlot.getDataset(0), 0, x);
     StockDataBean beanObj = Utils.getStockDataAsOfDate(stockData, calObj, selectedStock);

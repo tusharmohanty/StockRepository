@@ -44,7 +44,7 @@ private void initializeComponents() throws SQLException {
 	switchView = new JComboBox(new String[] {"Invst","Trade"});
 	switchView.addActionListener(this);
 	switchView.setActionCommand("chartView");
-	portfolio = new JComboBox(new String[] {"Open","Watchlist"});
+	portfolio = new JComboBox(new String[] {"Open","Watchlist","Buy List"});
 	portfolio.addActionListener(this);
 	portfolio.setActionCommand("portfolio");
 }
@@ -81,6 +81,14 @@ public void actionPerformed(ActionEvent e) {
             		   else if(view.equals("Watchlist")) {
             			   try {
 							StockPanel.INSTANCE.scripComboBox.setModel(new DefaultComboBoxModel(DataAccess.INSTANCE.getWatchListStockList().toArray()));
+						} catch (SQLException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+            		   }
+            		   else if(view.equals("Buy List")) {
+            			   try {
+							StockPanel.INSTANCE.scripComboBox.setModel(new DefaultComboBoxModel(DataAccess.INSTANCE.getBuyStockList().toArray()));
 						} catch (SQLException e1) {
 							// TODO Auto-generated catch block
 							e1.printStackTrace();
