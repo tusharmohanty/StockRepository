@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import org.jfree.chart.ChartColor;
@@ -15,6 +16,7 @@ import org.jfree.chart.ChartMouseEvent;
 import org.jfree.chart.ChartMouseListener;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.axis.AxisLocation;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.NumberAxis;
@@ -40,13 +42,17 @@ import org.jfree.data.time.ohlc.OHLCSeries;
 import org.jfree.data.time.ohlc.OHLCSeriesCollection;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.chart.ui.RectangleInsets;
+import org.jfree.chart.ui.TextAnchor;
 import org.jfree.chart.plot.CombinedDomainXYPlot;
 import org.jfree.chart.plot.Crosshair;
+import org.jfree.chart.plot.Marker;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.ValueMarker;
 
 import stocks.model.beans.PositionBean;
 import stocks.model.beans.StockDataBean;
 import stocks.model.data.DataAccess;
+import stocks.util.Utils;
 
 public class MainPriceChart implements ChartMouseListener{
 JFreeChart mainChart= null;
@@ -60,10 +66,11 @@ public List<StockDataBean> stockData = null;
 public List<PositionBean> positionData = null;
 private TimeSeries volumeSeries;
 public static final MainPriceChart INSTANCE = new MainPriceChart();
+public String selectedStock;
 TimeSeries priceSeries ;
 TimeSeries buyPositionSeries;
 TimeSeries sellPositionSeries;
-
+XYTextAnnotation a;
 private MainPriceChart() {
 	// Get all teh data first
 	try {
@@ -77,8 +84,9 @@ private MainPriceChart() {
 	mainChart = createMainChart();
 	chartPanel = new ChartPanel(mainChart);
 	chartPanel.setPreferredSize(new java.awt.Dimension(2200, 1200));
+	chartPanel.addChartMouseListener(this);
 	
-	//initializeMainChart();
+	initializeMainChart();
 	//chartPanel.setMouseZoomable(true, false);
 	
 }
@@ -134,7 +142,7 @@ private XYLineAndShapeRenderer getPricePlotRenderer() {
     renderer.setSeriesPaint(1, ChartColor.LIGHT_GREEN, true);
     renderer.setSeriesPaint(2, ChartColor.LIGHT_MAGENTA, true);
     renderer.setSeriesShapesVisible(2, true);
-    renderer.setDefaultToolTipGenerator(new StandardXYToolTipGenerator());
+    renderer.setDefaultToolTipGenerator(new PriceToolTipGenerator());
     renderer.setDefaultEntityRadius(6);
     return renderer;
 }
@@ -214,6 +222,7 @@ private JFreeChart createMainChart() {
 	mainPlot.add(priceSubplot, 3);
 	mainPlot.add(volumeSubplot, 1);
 	mainPlot.setOrientation(PlotOrientation.VERTICAL);
+	
 
 	JFreeChart chart = new JFreeChart(null, JFreeChart.DEFAULT_TITLE_FONT, mainPlot, true);
 	chart.removeLegend();
@@ -235,20 +244,20 @@ private  void initializeMainChart() {
     
     });
     crosshairOverlay.addDomainCrosshair(xCrosshair);
-    this.yCrosshairs = new Crosshair[SERIES_COUNT];
+    this.yCrosshairs = new Crosshair[1];
     
-    
-    for (int i = 0; i < SERIES_COUNT; i++) {
+   
+    for (int i = 0; i < 1; i++) {
         this.yCrosshairs[i] = new Crosshair(Double.NaN, Color.WHITE, new BasicStroke(0.5f));
         this.yCrosshairs[i].setLabelVisible(true);
         if (i % 2 != 0) {
-            this.yCrosshairs[i].setLabelAnchor(RectangleAnchor.TOP_RIGHT);
-        }
+        		this.yCrosshairs[i].setLabelAnchor(RectangleAnchor.TOP_RIGHT);
+        }        
         crosshairOverlay.addRangeCrosshair(yCrosshairs[i]);
     }
     this.yCrosshairs[0].setLabelBackgroundPaint(Color.WHITE);
-    chartPanel.addOverlay(crosshairOverlay);
-    this.chartPanel.addChartMouseListener(this);
+//    chartPanel.addOverlay(crosshairOverlay);
+//    this.chartPanel.addChartMouseListener(this);
 }
 private  void initializeChart() {
 	getMainDataSet();
@@ -403,21 +412,39 @@ private XYDataset getMainDataSet() {
  */
 @Override
 public void chartMouseMoved(ChartMouseEvent event) {
+	System.out.println("Moved mouse");
     Rectangle2D dataArea = this.chartPanel.getScreenDataArea();
     JFreeChart chart = event.getChart();
-    XYPlot plot = (XYPlot) chart.getPlot();
+    CombinedDomainXYPlot plot = (CombinedDomainXYPlot) chart.getPlot();
     ValueAxis xAxis = plot.getDomainAxis();
+    XYPlot pricePlot = (XYPlot) plot.getSubplots().get(0);
     double x = xAxis.java2DToValue(event.getTrigger().getX(), dataArea, 
             RectangleEdge.BOTTOM);
-    this.xCrosshair.setValue(x);
-    this.yCrosshairs[0].setValue(DatasetUtils.findYValue(plot.getDataset(), 0, x));
-    this.yCrosshairs[1].setValue(DatasetUtils.findYValue(plot.getDataset(1), 0, x));
+    Calendar calObj = Utils.getxAxisCalendarValue(x);
+    
+    System.out.println("Moved mouse" );
+    
+    double y = DatasetUtils.findYValue(pricePlot.getDataset(0), 0, x);
+    StockDataBean beanObj = Utils.getStockDataAsOfDate(stockData, calObj, selectedStock);
+    
+    if(a!= null) {
+    		pricePlot.removeAnnotation(a);
+    }
+    if(beanObj!= null) {
+    		a = new XYTextAnnotation(beanObj.getClose()+"", x, beanObj.getClose());
+    		a.setPaint(Color.WHITE);
+    	    pricePlot.addAnnotation(a);
+    }
+    //a.setFont(a.getFont().deriveFont(24f));
+
+    //this.yCrosshairs[1].setValue(DatasetUtils.findYValue(plot.getDataset(1), 0, x));
 //    for (int i = 0; i < SERIES_COUNT; i++) {
 //        double y = DatasetUtils.findYValue(plot.getDataset(), i, x);
 //        this.yCrosshairs[i].setValue(y);
 //    }
     //System.out.println(DatasetUtils.findYValue(plot.getDataset(1),0,x));
 }
+
 
 @Override
 public void chartMouseClicked(ChartMouseEvent event) {

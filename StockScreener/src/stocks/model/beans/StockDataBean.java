@@ -57,6 +57,25 @@ public void setVolume(long volume) {
 	this.volume = volume;
 }
 
+@Override
+public boolean equals(Object obj) { 
+if(this == obj) {
+        return true; 
+}
+else if(obj == null || obj.getClass()!= this.getClass()) {
+       return false; 
+}  
+StockDataBean stockData = (StockDataBean) obj; 
+    boolean  isSameDay = (stockData.dateObj.get(Calendar.DAY_OF_YEAR)  == this.dateObj.get(Calendar.DAY_OF_YEAR) ) &&
+                         (stockData.dateObj.get(Calendar.YEAR) == this.dateObj.get(Calendar.YEAR));
+    return (stockData.stockCode == this.stockCode && isSameDay); 
+} 
+  
+@Override
+public int hashCode() { 
+          return this.stockCode.hashCode() + new Integer(this.dateObj.get(Calendar.DAY_OF_YEAR)).hashCode() +  new Integer(this.dateObj.get(Calendar.YEAR)).hashCode(); 
+} 
+
 public String toString() {
 	return "Code  :" + this.getStockCode() + "\n" +
            "Open  :" +  this .getOpen()    + "\n" +
