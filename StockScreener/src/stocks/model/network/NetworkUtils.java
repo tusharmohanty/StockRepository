@@ -14,6 +14,7 @@ public static String getBhavUrl(java.util.Date dateObj, String exchange) {
 	else if (exchange.equals(StockConstants.BSE_EXCHANGE)) {
 		returnString = StockConstants.BSE_BHAV_COPY_URL + getBhavCopyFile(dateObj, exchange);
 	}
+	
 	return returnString;
 }
 private static String getNetworkPrefix (java.util.Date dateObj, String exchange) {
