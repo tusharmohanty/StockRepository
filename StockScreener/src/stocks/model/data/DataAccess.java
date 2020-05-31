@@ -185,7 +185,7 @@ public List <StockDataBean> getStockData(String stockCode) throws SQLException{
 	return stockDataList;
 }
 
-public List <PositionBean> getPositionData(String stockCode) throws SQLException{
+public List <PositionBean> getPositionData(String stockCode, String status) throws SQLException{
 	List <PositionBean> positionDataList = new ArrayList<PositionBean>();
 	Connection conn= DBTxn.INSTANCE.DS.getConnection();
 	PreparedStatement stmt = null;
@@ -193,9 +193,10 @@ public List <PositionBean> getPositionData(String stockCode) throws SQLException
 	boolean latestValue = true;
 	try {
 		stmt = conn.prepareStatement("Select p.stock_code, p.txn_date, p.price ,p.qty,p.txn_type from positions p, stock_data s where s.stock_code = p.stock_code "
-				                   + "and s.stock_code = ? and trunc(s.TXN_DATE) =(select trunc(max(txn_date)) from stock_data where stock_code = ?)  order by p.txn_date desc");
+				                   + "and s.stock_code = ? and trunc(s.TXN_DATE) =(select trunc(max(txn_date)) from stock_data where stock_code = ?) and p.status = ? order by p.txn_date desc");
 		stmt.setString(1, stockCode);
 		stmt.setString(2, stockCode);
+		stmt.setString(3, status);
 		rs = stmt.executeQuery();
 		while(rs.next()) {
 			PositionBean beanObj = new PositionBean();

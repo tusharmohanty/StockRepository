@@ -53,21 +53,19 @@ public void actionPerformed(ActionEvent e) {
         if(selectedStock != null){
         	   String scripCode = selectedStock.getStockCode();
                 //setModel(selectedStock.getStockSymbol());
-        	   List <StockDataBean> stockData = null;
-        	   List <PositionBean> positionData = null;
         	   try {
-        		   stockData = DataAccess.INSTANCE.getStockData(scripCode);
-        		   positionData = DataAccess.INSTANCE.getPositionData(scripCode);
-        		   MainPriceChart.INSTANCE.stockData = stockData;
-        		   MainPriceChart.INSTANCE.positionData= positionData;
+        		   
+        		   MainPriceChart.INSTANCE.stockData = DataAccess.INSTANCE.getStockData(scripCode);
+        		   MainPriceChart.INSTANCE.positionData= DataAccess.INSTANCE.getPositionData(scripCode,"A");
+        		   MainPriceChart.INSTANCE.closedPositionData=DataAccess.INSTANCE.getPositionData(scripCode,"I");
         		   MainPriceChart.INSTANCE.selectedStock = scripCode;
         		   MainPriceChart.INSTANCE.refreshDataSet();
         		   
-        		   TradeChart.INSTANCE.stockData = stockData;
+        		   TradeChart.INSTANCE.stockData = MainPriceChart.INSTANCE.stockData;
         		   TradeChart.INSTANCE.refreshDataSet();
         		   BasicInfoPanel.INSTANCE.data[0][1]= new DecimalFormat("##.##").format(DataAccess.INSTANCE.latestValue*0.002);
         		   BasicInfoPanel.INSTANCE.data[1][1]= new DecimalFormat("##.##").format(DataAccess.INSTANCE.latestValue*1.002);
-        		   OpenPositionPanel.INSTANCE.openPositions = positionData;
+        		   OpenPositionPanel.INSTANCE.openPositions = MainPriceChart.INSTANCE.positionData;
         		   OpenPositionPanel.INSTANCE.table.repaint();
         		   BasicInfoPanel.INSTANCE.table.repaint();
 			} catch (SQLException e1) {

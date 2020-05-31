@@ -49,7 +49,7 @@ private void addComponentsToPanel() {
 }
 
 private void initializeComponents() throws SQLException {
-	DataAccess.INSTANCE.getPositionData(StockPanel.INSTANCE.scripComboBox.getSelectedItem().toString());
+	DataAccess.INSTANCE.getPositionData(StockPanel.INSTANCE.scripComboBox.getSelectedItem().toString(),"A");
 	table = new JTable(new PositionTableModel());
     table.setFillsViewportHeight(true);
 	scrollPane = new JScrollPane(table);

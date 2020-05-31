@@ -68,11 +68,14 @@ private Crosshair xCrosshair;
 private Crosshair[] yCrosshairs;
 public List<StockDataBean> stockData = null;
 public List<PositionBean> positionData = null;
+public List<PositionBean> closedPositionData = null;
+
 private TimeSeries volumeSeries;
 public static final MainPriceChart INSTANCE = new MainPriceChart();
 public String selectedStock;
 TimeSeries priceSeries ;
 TimeSeries buyPositionSeries;
+TimeSeries closedBuyPositionSeries;
 TimeSeries sellPositionSeries;
 XYTextAnnotation a;
 XYPlot priceSubplot;
@@ -80,7 +83,8 @@ private MainPriceChart() {
 	// Get all teh data first
 	try {
 		stockData = DataAccess.INSTANCE.getStockData(null);
-        positionData = DataAccess.INSTANCE.getPositionData(null);
+        positionData = DataAccess.INSTANCE.getPositionData(null,"A");
+        closedPositionData = DataAccess.INSTANCE.getPositionData(null,"I");
     } catch (SQLException e) {
 	// TODO Auto-generated catch block
 	e.printStackTrace();
@@ -100,6 +104,8 @@ public void refreshDataSet() {
 	volumeSeries.clear();
 	priceSeries.clear();
 	sellPositionSeries.clear();
+	closedBuyPositionSeries.clear();
+	buyPositionSeries.clear();
 	List<XYAnnotation> allAnnotations = priceSubplot.getAnnotations();
 	for (int tempCount =0;tempCount < allAnnotations.size();tempCount++) {
 		priceSubplot.removeAnnotation(allAnnotations.get(tempCount));
@@ -111,7 +117,7 @@ public void refreshDataSet() {
 		          beanObj.getDateObj().get(Calendar.YEAR));
 		priceSeries.add(dayObj,beanObj.getClose());
 		volumeSeries.add(new TimeSeriesDataItem(dayObj,beanObj.getVolume()));
-		buyPositionSeries.clear();
+		
 	}
 	for(int tempCount=0; tempCount < positionData.size();tempCount++) {
 		PositionBean beanObj = positionData.get(tempCount);
@@ -124,9 +130,18 @@ public void refreshDataSet() {
 			buyPositionSeries.addOrUpdate(dayObj,beanObj.getPrice());
 		}
 	}
-	for(int tempCount=0; tempCount < positionData.size();tempCount++) {
-		PositionBean beanObj = positionData.get(tempCount);
-		if(beanObj.getTxnType().equals("S")){
+	for(int tempCount=0; tempCount < closedPositionData.size();tempCount++) {
+		PositionBean beanObj = closedPositionData.get(tempCount);
+		
+		if(beanObj.getTxnType().equals("B")) {
+			Calendar calObj = Calendar.getInstance();
+			calObj.setTime(beanObj.getTxnDate());
+			Day dayObj = new Day(calObj.get(Calendar.DATE),
+			                     calObj.get(Calendar.MONTH) + 1, 
+			                     calObj.get(Calendar.YEAR));
+			closedBuyPositionSeries.add(dayObj,beanObj.getPrice());
+		}
+		else if(beanObj.getTxnType().equals("S")){
 			Calendar calObj = Calendar.getInstance();
 			calObj.setTime(beanObj.getTxnDate());
 			Day dayObj = new Day(calObj.get(Calendar.DATE),
@@ -134,6 +149,7 @@ public void refreshDataSet() {
 			                     calObj.get(Calendar.YEAR));
 			sellPositionSeries.add(dayObj,beanObj.getPrice());
 		}
+		
 	}
 	try {
 		List<AlertBean> alertList = DataAccess.INSTANCE.getAlertList(selectedStock);
@@ -179,14 +195,18 @@ private XYLineAndShapeRenderer getPricePlotRenderer() {
     renderer.setSeriesLinesVisible(0, true);     //price data is displayed as a line
     renderer.setSeriesLinesVisible(1, false);     // earnings data is displayed as a line 
     renderer.setSeriesLinesVisible(2, false);   // position data is displayed as a dot
+    renderer.setSeriesLinesVisible(3, false);   // position data is displayed as a dot
     renderer.setSeriesShapesVisible(0, false);
     renderer.setSeriesShapesVisible(1, true);
     renderer.setSeriesShapesVisible(2, true);
+    renderer.setSeriesShapesVisible(3, true);
     renderer.setSeriesFillPaint(1, ChartColor.LIGHT_GREEN,true);
     renderer.setSeriesFillPaint(2, ChartColor.LIGHT_GREEN,true);
     renderer.setSeriesPaint(1, ChartColor.LIGHT_GREEN, true);
-    renderer.setSeriesPaint(2, ChartColor.LIGHT_MAGENTA, true);
+    renderer.setSeriesPaint(3, ChartColor.VERY_DARK_GREEN, true);
+    renderer.setSeriesPaint(2, ChartColor.VERY_DARK_MAGENTA, true);
     renderer.setSeriesShapesVisible(2, true);
+    renderer.setSeriesShapesVisible(3, true);
     renderer.setDefaultToolTipGenerator(new PriceToolTipGenerator());
     renderer.setDefaultEntityRadius(6);
     return renderer;
@@ -201,9 +221,11 @@ private JFreeChart createMainChart() {
 	priceSeries = new TimeSeries("Price");
 	buyPositionSeries = new TimeSeries ("Buy");
 	sellPositionSeries = new TimeSeries ("Sell");
+	closedBuyPositionSeries = new TimeSeries ("Buy Closed");
 	priceDataSet.addSeries(priceSeries);
 	priceDataSet.addSeries(buyPositionSeries);
 	priceDataSet.addSeries(sellPositionSeries);
+	priceDataSet.addSeries(closedBuyPositionSeries);
 	priceSubplot = new XYPlot(priceDataSet , null, priceAxis, renderer);
 	priceSubplot.setBackgroundPaint(Color.black);
 	priceSubplot.setDomainPannable(true);
@@ -304,119 +326,7 @@ private  void initializeMainChart() {
 //    chartPanel.addOverlay(crosshairOverlay);
 //    this.chartPanel.addChartMouseListener(this);
 }
-private  void initializeChart() {
-	getMainDataSet();
-	XYPlot plot = (XYPlot) mainChart.getPlot();
-	plot.setDomainPannable(true);
-    plot.setRangePannable(true);
-	plot.setInsets(new RectangleInsets(5.0, 5.0, 5.0, 5.0));
-    plot.setBackgroundPaint(Color.BLACK);
-    plot.setDomainGridlinePaint(Color.white);
-    plot.setRangeGridlinePaint(Color.white);
-    plot.setDomainCrosshairVisible(true);
-    plot.setRangeCrosshairVisible(true);
-    XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-    renderer.setSeriesLinesVisible(0, true);     //price data is displayed as a line
-    renderer.setSeriesLinesVisible(1, false);     // earnings data is displayed as a line 
-    renderer.setSeriesLinesVisible(2, false);   // position data is displayed as a dot
-    renderer.setSeriesShapesVisible(0, false);
-    renderer.setSeriesShapesVisible(1, true);
-    renderer.setSeriesShapesVisible(2, true);
-    renderer.setSeriesFillPaint(1, ChartColor.LIGHT_GREEN,true);
-    renderer.setSeriesFillPaint(2, ChartColor.LIGHT_GREEN,true);
-    renderer.setSeriesPaint(1, ChartColor.LIGHT_GREEN, true);
-    renderer.setSeriesPaint(2, ChartColor.LIGHT_MAGENTA, true);
-    renderer.setSeriesShapesVisible(2, true);
-    renderer.setDefaultToolTipGenerator(new StandardXYToolTipGenerator());
-    renderer.setDefaultEntityRadius(6);
-    plot.setRenderer(renderer);
-//    XYItemRenderer r = plot.getRenderer();
-//    if (r instanceof XYLineAndShapeRenderer) {
-//        XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) r;
-//        renderer.setDefaultShapesVisible(false);
-//        renderer.setDefaultShapesFilled(false);
-//    }
-    DateAxis axis = (DateAxis) plot.getDomainAxis();
-    axis.setDateFormatOverride(new SimpleDateFormat("dd-MM-yyyy"));
-    
-   
-    
- // AXIS 2
-    NumberAxis axis2 = new NumberAxis("Earnings");
-    axis2.setAutoRangeIncludesZero(false);
-    plot.setRangeAxis(1, axis2);
-    plot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_LEFT);
-    
-    plot.setDataset(1, getEarningsDataSet());
-    plot.mapDatasetToRangeAxis(1, 1);
-    XYItemRenderer renderer2 = new StandardXYItemRenderer();
-    plot.setRenderer(1, renderer2);
- 
-    
-    
-    CrosshairOverlay crosshairOverlay = new CrosshairOverlay();
-    this.xCrosshair = new Crosshair(Double.NaN, Color.WHITE, new BasicStroke(0.5f));
-    this.xCrosshair.setLabelVisible(true);
-    this.xCrosshair.setLabelBackgroundPaint(Color.WHITE);
-    this.xCrosshair.setLabelGenerator(new CrosshairLabelGenerator () {
-        @Override
-        public String generateLabel(Crosshair crshr) {
-            String converted = new SimpleDateFormat("dd-MMM-YYYY").format(crshr.getValue());   
-            return converted;
-        }
-    
-    });
-    crosshairOverlay.addDomainCrosshair(xCrosshair);
-    this.yCrosshairs = new Crosshair[SERIES_COUNT];
-    
-    
-    for (int i = 0; i < SERIES_COUNT; i++) {
-        this.yCrosshairs[i] = new Crosshair(Double.NaN, Color.WHITE, new BasicStroke(0.5f));
-        this.yCrosshairs[i].setLabelVisible(true);
-        if (i % 2 != 0) {
-            this.yCrosshairs[i].setLabelAnchor(RectangleAnchor.TOP_RIGHT);
-        }
-        crosshairOverlay.addRangeCrosshair(yCrosshairs[i]);
-    }
-    this.yCrosshairs[0].setLabelBackgroundPaint(Color.WHITE);
-    chartPanel.addOverlay(crosshairOverlay);
-    this.chartPanel.addChartMouseListener(this);
-}
 
-private TimeSeries getBuyPositionSeries(){
-	TimeSeries positionSeries = new TimeSeries("Positions Buy");
-	for(int tempCount=0; tempCount < positionData.size();tempCount++) {
-		PositionBean beanObj = positionData.get(tempCount);
-		if(beanObj.getTxnType().equals("B")){
-			Calendar calObj = Calendar.getInstance();
-			calObj.setTime(beanObj.getTxnDate());
-			Day dayObj = new Day(calObj.get(Calendar.DATE),
-			                     calObj.get(Calendar.MONTH) + 1, 
-			                     calObj.get(Calendar.YEAR));
-			positionSeries.addOrUpdate(dayObj,beanObj.getPrice());
-		}
-		
-	}
-return positionSeries;
-	
-}
-
-private TimeSeries getSellPositionSeries(){
-	TimeSeries positionSeries = new TimeSeries("Positions Sell");
-	for(int tempCount=0; tempCount < positionData.size();tempCount++) {
-		PositionBean beanObj = positionData.get(tempCount);
-		if(beanObj.getTxnType().equals("S")){
-			Calendar calObj = Calendar.getInstance();
-			calObj.setTime(beanObj.getTxnDate());
-			Day dayObj = new Day(calObj.get(Calendar.DATE),
-			                     calObj.get(Calendar.MONTH) + 1, 
-			                     calObj.get(Calendar.YEAR));
-			positionSeries.add(dayObj,beanObj.getPrice());
-		}
-	}
-return positionSeries;
-	
-}
 private XYDataset getEarningsDataSet() {
 	
     TimeSeries earnings = new TimeSeries("Earnings");
@@ -433,22 +343,7 @@ private XYDataset getEarningsDataSet() {
 	return earningsDataSet;
 	
 }
-private XYDataset getMainDataSet() {
-	TimeSeries price = new TimeSeries("Price");
-	
-	TimeSeriesCollection dataSet = new TimeSeriesCollection();
-	for(int tempCount=0; tempCount < stockData.size();tempCount++) {
-		StockDataBean beanObj = stockData.get(tempCount);
-		Day dayObj = new Day(beanObj.getDateObj().get(Calendar.DATE),
-		          beanObj.getDateObj().get(Calendar.MONTH) + 1, 
-		          beanObj.getDateObj().get(Calendar.YEAR));
-		price.add(dayObj,beanObj.getClose());
-	}
-	dataSet.addSeries(price);
-	dataSet.addSeries(getBuyPositionSeries());
-	dataSet.addSeries(getSellPositionSeries());
-	return dataSet;
-}
+
 
 /**
  * Update the crosshairs.
