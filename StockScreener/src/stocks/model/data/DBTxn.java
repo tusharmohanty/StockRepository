@@ -19,7 +19,7 @@ public class DBTxn {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			ConnectionFactory connectionFactory =new DriverManagerConnectionFactory("jdbc:oracle:thin:stocks/stocks@172.0.0.1:1521:XE",null);
+			ConnectionFactory connectionFactory =new DriverManagerConnectionFactory("jdbc:oracle:thin:stocks/linuxing@10.0.0.32:1521:XE",null);
 			PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
 			ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
 			poolableConnectionFactory.setPool(connectionPool);

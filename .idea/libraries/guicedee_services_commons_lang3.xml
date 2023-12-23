@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="guicedee.services.commons.lang3" type="repository">
+    <properties maven-id="com.guicedee.services:commons-lang3:62" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/commons-lang3-62.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/lib/commons-lang3-62-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/commons-lang3-62-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
