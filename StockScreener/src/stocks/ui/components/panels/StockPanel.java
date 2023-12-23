@@ -65,8 +65,8 @@ public void actionPerformed(ActionEvent e) {
         		   TradeChart.INSTANCE.refreshDataSet();
         		   BasicInfoPanel.INSTANCE.data[0][1]= new DecimalFormat("##.##").format(DataAccess.INSTANCE.latestValue*0.002);
         		   BasicInfoPanel.INSTANCE.data[1][1]= new DecimalFormat("##.##").format(DataAccess.INSTANCE.latestValue*1.002);
-        		   OpenPositionPanel.INSTANCE.openPositions = MainPriceChart.INSTANCE.positionData;
-        		   OpenPositionPanel.INSTANCE.table.repaint();
+//        		   OpenPositionPanel.INSTANCE.openPositions = MainPriceChart.INSTANCE.positionData;
+//        		   OpenPositionPanel.INSTANCE.table.repaint();
         		   BasicInfoPanel.INSTANCE.table.repaint();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block

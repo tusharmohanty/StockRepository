@@ -125,23 +125,27 @@ public List <AlertBean> getAlertList(String stockCode) throws SQLException{
 	PreparedStatement stmt = null;
 	ResultSet rs = null;
 	try {
-		stmt = conn.prepareStatement("select a.STOCK_CODE, a.alert_type, a.threshold, a.comments,a.alert_price,a.alert_date  from stock_alerts a where a.STOCK_CODE = ?");
-		stmt.setString(1, stockCode);
-		rs = stmt.executeQuery();
-		while(rs.next()) {
-			AlertBean beanObj = new AlertBean();
-			beanObj.setStockCode(rs.getString("stock_Code"));
-			beanObj.setAlertType(rs.getString("alert_type"));
-			beanObj.setComments(rs.getString("comments"));
-			beanObj.setThreshold(rs.getDouble("threshold"));
-			beanObj.setAlertPrice(rs.getDouble("alert_price"));
-			beanObj.setAlertDate(rs.getDate("alert_date"));
-			alertList.add(beanObj);
-		}
+//		stmt = conn.prepareStatement("select a.STOCK_CODE, a.alert_type, a.threshold, a.comments,a.alert_price,a.alert_date  from stock_alerts a where a.STOCK_CODE = ?");
+//		stmt.setString(1, stockCode);
+//		rs = stmt.executeQuery();
+//		while(rs.next()) {
+//			AlertBean beanObj = new AlertBean();
+//			beanObj.setStockCode(rs.getString("stock_Code"));
+//			beanObj.setAlertType(rs.getString("alert_type"));
+//			beanObj.setComments(rs.getString("comments"));
+//			beanObj.setThreshold(rs.getDouble("threshold"));
+//			beanObj.setAlertPrice(rs.getDouble("alert_price"));
+//			beanObj.setAlertDate(rs.getDate("alert_date"));
+//			alertList.add(beanObj);
+//		}
 	}
 	finally {
-		rs.close();
-		stmt.close();
+		if(rs != null) {
+			rs.close();
+		}
+		if(stmt!= null) {
+			stmt.close();
+		}
 		conn.close();
 	}
 	return alertList;
