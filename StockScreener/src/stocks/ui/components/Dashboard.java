@@ -17,14 +17,14 @@ public class Dashboard extends JFrame{
 	public  final StockPanel stockPanel = StockPanel.INSTANCE;
 	public  final MainChartPanel chartPanel = MainChartPanel.INSTANCE;
 	public  final BasicInfoPanel basicInfoPanel = BasicInfoPanel.INSTANCE;
-//	public  final OpenPositionPanel openPositionPanel = OpenPositionPanel.INSTANCE;
+    public  final OpenPositionPanel openPositionPanel = OpenPositionPanel.INSTANCE;
 	
 	public  final OptionsPanel optionsPanel = OptionsPanel.INSTANCE;
 	public static final Dashboard INSTANCE = new Dashboard(); 
     private  Dashboard() {
     	   this.setDefaultCloseOperation(EXIT_ON_CLOSE);
     	   this.setTitle("Stock Screener 1.0");
-    	   this.setPreferredSize(new Dimension(3000,12000));
+    	   this.setPreferredSize(new Dimension(3000,10000));
     	   this.setLocationRelativeTo(null);
     	   
     }
@@ -46,7 +46,7 @@ public class Dashboard extends JFrame{
     this.setLayout(new TableLayout(size));
     this.add(stockPanel,    "0,0,0,0");
     this.add(basicInfoPanel,"0,1,0,1");
-    //this.add(openPositionPanel,"0,2,0,1");
+    this.add(openPositionPanel,"0,2,0,1");
     this.add(chartPanel,    "1,0,1,8");
     this.add(optionsPanel,"0,9,1,9");
     }

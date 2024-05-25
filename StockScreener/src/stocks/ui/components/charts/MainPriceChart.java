@@ -92,7 +92,7 @@ private MainPriceChart() {
 	// get the main chart sorted 
 	mainChart = createMainChart();
 	chartPanel = new ChartPanel(mainChart);
-	chartPanel.setPreferredSize(new java.awt.Dimension(2200, 1200));
+	chartPanel.setPreferredSize(new java.awt.Dimension(1620, 800));
 	chartPanel.addChartMouseListener(this);
 	
 	initializeMainChart();

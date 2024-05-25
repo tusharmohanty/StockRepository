@@ -70,7 +70,7 @@ private TradeChart() {
 	// get the main chart sorted 
 	mainChart = createCandlStickChart();
 	chartPanel = new ChartPanel(mainChart);
-	chartPanel.setPreferredSize(new java.awt.Dimension(2200, 1200));
+	chartPanel.setPreferredSize(new java.awt.Dimension(1620, 800));
 	//chartPanel.setMouseZoomable(true, false);
 	
 }

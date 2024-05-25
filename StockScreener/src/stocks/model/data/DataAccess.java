@@ -198,23 +198,23 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 	ResultSet rs = null;
 	boolean latestValue = true;
 	try {
-//		stmt = conn.prepareStatement("Select p.stock_code, p.txn_date, p.price ,p.qty,p.txn_type from positions p, stock_data s where s.stock_code = p.stock_code "
-//				                   + "and s.stock_code = ? and trunc(s.TXN_DATE) =(select trunc(max(txn_date)) from stock_data where stock_code = ?) and p.status = ? order by p.txn_date desc");
-//		stmt.setString(1, stockCode);
-//		stmt.setString(2, stockCode);
-//		stmt.setString(3, status);
-//		rs = stmt.executeQuery();
-//		while(rs.next()) {
-//			PositionBean beanObj = new PositionBean();
-//			beanObj.setStockCode(stockCode);
-//			Calendar calObj = new GregorianCalendar();
-//			beanObj.setTxnDate(rs.getDate("txn_Date"));
-//			beanObj.setPrice(rs.getDouble("price"));
-//			beanObj.setQty(rs.getInt("qty"));
-//			beanObj.setTxnType(rs.getString("txn_type"));
-//
-//			positionDataList.add(beanObj);
-//		}
+		stmt = conn.prepareStatement("Select p.stock_code, p.txn_date, p.price ,p.qty,p.txn_type from positions p, stock_data s where s.stock_code = p.stock_code "
+				                   + "and s.stock_code = ? and trunc(s.TXN_DATE) =(select trunc(max(txn_date)) from stock_data where stock_code = ?) and p.status = ? order by p.txn_date desc");
+		stmt.setString(1, stockCode);
+		stmt.setString(2, stockCode);
+		stmt.setString(3, status);
+		rs = stmt.executeQuery();
+		while(rs.next()) {
+			PositionBean beanObj = new PositionBean();
+			beanObj.setStockCode(stockCode);
+			Calendar calObj = new GregorianCalendar();
+			beanObj.setTxnDate(rs.getDate("txn_Date"));
+			beanObj.setPrice(rs.getDouble("price"));
+			beanObj.setQty(rs.getInt("qty"));
+			beanObj.setTxnType(rs.getString("txn_type"));
+
+			positionDataList.add(beanObj);
+		}
 	}
 	finally {
 		if(rs != null) {
