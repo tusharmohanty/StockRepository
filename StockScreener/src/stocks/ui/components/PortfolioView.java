@@ -12,6 +12,7 @@ public class PortfolioView extends JFrame{
     public  final PortfolioPanel portfolioPanel = PortfolioPanel.INSTANCE;
     public final CommentsPanel commentsPanel = CommentsPanel.INSTANCE;
     public  final MainChartPanel chartPanel = MainChartPanel.INSTANCE;
+    public final BottomPortfolioMenuPanel bottomPortfolioMenuPanel = BottomPortfolioMenuPanel.INSTANCE;
     public static final PortfolioView INSTANCE = new PortfolioView();
     private  PortfolioView() {
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -23,15 +24,18 @@ public class PortfolioView extends JFrame{
 
     private void addMainComponentsToPane(Container pane) {
         double size[][] =
-                {{0.01,0.3,0.69},
-                        {0.8,0.06, 0.14}};
+                {{0.3,0.7},
+                        {0.64,0.12,0.12,0.12}};
 
         this.setLayout(new TableLayout(size));
-        this.add(portfolioPanel,    "1,0,1,0");
-        this.add(chartPanel,"2,0,2,0");
-        this.add(commentsPanel,"2,1,2,1");
-        this.add(ConsolidatedPortfolio.INSTANCE,"1,1,1,1");
-        this.add(PortfolioMenuPanel.INSTANCE,"1,2,2,2");
+        this.add(portfolioPanel,    "0,0,0,0");
+        this.add(ConsolidatedPortfolio.INSTANCE,"0,1,0,1");
+        this.add(PortfolioMenuPanel.INSTANCE,"0,2,0,3");
+
+        // 2nd column content
+        this.add(chartPanel,"1,0,1,0");
+        this.add(commentsPanel,"1,1,1,2");
+        this.add(bottomPortfolioMenuPanel,"1,3,1,3");
     }
 
     public void initializeComponents(){

@@ -40,8 +40,9 @@ private List<StockCalendar> dataExists(String stockCode) throws SQLException{
 	ResultSet rs = null;
 	List<StockCalendar> returnObj= new ArrayList<StockCalendar>();
 	try {
-		stmt = conn.prepareStatement("Select txn_date from stock_data where stock_code = ? "
-				+ "  UNION select holiday from holiday_list");
+		stmt = conn.prepareStatement("Select txn_date from stock_data where stock_code = ? " +
+				                         "union " +
+				                         "Select holiday from holiday_list");
 		stmt.setString(1, stockCode);
 		rs = stmt.executeQuery();
 		while(rs.next()) {
@@ -52,7 +53,9 @@ private List<StockCalendar> dataExists(String stockCode) throws SQLException{
 		}
 	}
 	finally {
-		rs.close();
+		if(rs != null) {
+			rs.close();
+		}
 		stmt.close();
 		conn.close();
 	}
@@ -229,9 +232,11 @@ public void registerHoliday(java.sql.Date dateObject) throws SQLException {
 			stmt = conn.prepareStatement("insert into holiday_list select ? from dual " + 
 					" where not exists(select 1 " + 
 					"                 from holiday_list " + 
-					"                 where (holiday =?))");
+					"                 where (holiday =?)) " +
+					" and not exists (select 1 from stock_data where txn_date = ?)"); // needed so that if bse fails for some reason , not all the dates are marked as holidays
 			stmt.setDate(1, dateObject);
 			stmt.setDate(2, dateObject);
+		    stmt.setDate(3, dateObject);
 						stmt.executeUpdate();
 		   // conn.commit();
 		

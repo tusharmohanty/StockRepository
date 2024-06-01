@@ -53,9 +53,11 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.ValueMarker;
 
 import stocks.model.beans.AlertBean;
+import stocks.model.beans.LatestStockDataBean;
 import stocks.model.beans.PositionBean;
 import stocks.model.beans.StockDataBean;
 import stocks.model.data.DataAccess;
+import stocks.ui.components.panels.PortfolioPanel;
 import stocks.util.Utils;
 
 public class MainPriceChart implements ChartMouseListener{
@@ -151,17 +153,59 @@ public void refreshDataSet() {
 		}
 		
 	}
+	addBasePriceAnnotations();
+
+}
+
+private void addBasePriceAnnotations(){
 	try {
-		AlertBean beanObj = DataAccess.INSTANCE.getBuyPriceAlert(selectedStock);
-		XYRangeValueAnnotation rva = new XYRangeValueAnnotation();
-		rva.setValue(beanObj.getAlertPrice());
+		LatestStockDataBean beanObj = DataAccess.INSTANCE.getLatestStockData(selectedStock);
+		XYRangeValueAnnotation buyPriceAnnotation = new XYRangeValueAnnotation();
+		buyPriceAnnotation.setValue(beanObj.getBuyPrice());
 		Font f = new Font("Tahoma",1,12);
-		rva.setLabelFont(f);
-		rva.setStroke(new BasicStroke(1.0f));
-		if(beanObj.getAlertType().equals("BUY")) {
-			rva.setPaint(Color.GREEN);
+		buyPriceAnnotation.setLabelFont(f);
+		buyPriceAnnotation.setStroke(new BasicStroke(1f));
+		buyPriceAnnotation.setPaint(Color.GREEN);
+		buyPriceAnnotation.setLabel(beanObj.getBuyPrice() + "");
+		buyPriceAnnotation.setLabelVisible(true);
+		buyPriceAnnotation.setLabelBackgroundVisible(true);
+		buyPriceAnnotation.setLabelTextAnchor(TextAnchor.TOP_LEFT);
+		buyPriceAnnotation.setLabelAnchor(org.jfree.ui.RectangleAnchor.LEFT);
+
+		priceSubplot.addAnnotation(buyPriceAnnotation);
+
+		XYRangeValueAnnotation currentPriceAnnotation = new XYRangeValueAnnotation();
+		currentPriceAnnotation.setValue(beanObj.getLatestPrice());
+		currentPriceAnnotation.setLabelFont(f);
+		currentPriceAnnotation.setStroke(new BasicStroke(1f));
+		currentPriceAnnotation.setPaint(Color.WHITE);
+		currentPriceAnnotation.setLabel(beanObj.getLatestPrice() + "");
+		currentPriceAnnotation.setLabelVisible(true);
+		currentPriceAnnotation.setLabelBackgroundVisible(true);
+		currentPriceAnnotation.setLabelTextAnchor(TextAnchor.TOP_LEFT);
+		currentPriceAnnotation.setLabelAnchor(org.jfree.ui.RectangleAnchor.LEFT);
+
+		priceSubplot.addAnnotation(currentPriceAnnotation);
+
+		List<AlertBean> alertListObj = DataAccess.INSTANCE.getAlertList(selectedStock,"B");
+		if(alertListObj!= null && alertListObj.size() > 0) {
+			XYRangeValueAnnotation watchListAnnotation = new XYRangeValueAnnotation();
+			watchListAnnotation.setValue(alertListObj.get(0).getAlertPrice());
+			watchListAnnotation.setLabelFont(f);
+			watchListAnnotation.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL,
+					0, new float[]{9}, 0));
+			watchListAnnotation.setPaint(Color.WHITE);
+			watchListAnnotation.setLabel(alertListObj.get(0).getAlertPrice() + "");
+			watchListAnnotation.setLabelVisible(true);
+			watchListAnnotation.setLabelBackgroundVisible(true);
+			watchListAnnotation.setLabelTextAnchor(TextAnchor.TOP_LEFT);
+			watchListAnnotation.setLabelAnchor(org.jfree.ui.RectangleAnchor.LEFT);
+			watchListAnnotation.setToolTipText(alertListObj.get(0).getComments());
+			priceSubplot.addAnnotation(watchListAnnotation);
 		}
-		priceSubplot.addAnnotation(rva);
+
+
+
 	}
 	catch (SQLException ex) {
 		throw new RuntimeException(ex);

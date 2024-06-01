@@ -6,6 +6,7 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.sql.*;
 import java.util.*;
+import java.util.Date;
 
 import stocks.model.StockConstants;
 import stocks.model.beans.*;
@@ -114,14 +115,15 @@ public List <StocksBean> getBuyStockList() throws SQLException{
 	return stockList;
 }
 
-public List <AlertBean> getAlertList(String stockCode) throws SQLException{
+public List <AlertBean> getAlertList(String stockCode,String alertType) throws SQLException{
 	List <AlertBean> alertList = new ArrayList<AlertBean>();
 	Connection conn= DBTxn.INSTANCE.DS.getConnection();
 	PreparedStatement stmt = null;
 	ResultSet rs = null;
 	try {
-		stmt = conn.prepareStatement("select a.STOCK_CODE, a.alert_type, a.threshold, a.comments,a.alert_price,a.alert_date  from stock_alerts a where a.STOCK_CODE = ?");
+		stmt = conn.prepareStatement("select a.STOCK_CODE, a.alert_type, a.threshold, a.comments,a.alert_price,a.alert_date  from stock_alerts a where a.STOCK_CODE = ? and a.alert_type = ? order by alert_date desc");
 		stmt.setString(1, stockCode);
+		stmt.setString(2,alertType);
 		rs = stmt.executeQuery();
 		while(rs.next()) {
 			AlertBean beanObj = new AlertBean();
@@ -146,6 +148,28 @@ public List <AlertBean> getAlertList(String stockCode) throws SQLException{
 	return alertList;
 }
 
+	public void saveAlerts(String stockCode, String alertType, double threshold, String comments, java.sql.Date alertDate,double alertPrice) throws SQLException{
+		List <AlertBean> alertList = new ArrayList<AlertBean>();
+		Connection conn= DBTxn.INSTANCE.DS.getConnection();
+		PreparedStatement stmt = null;
+		try {
+			stmt = conn.prepareStatement("insert into stock_alerts (stock_code,alert_type,threshold,comments,alert_date,alert_price) values (?,?,?,?,?,?)");
+			stmt.setString(1, stockCode);
+			stmt.setString(2,alertType);
+			stmt.setDouble(3,threshold);
+			stmt.setString(4,comments);
+			stmt.setDate(5,alertDate);
+			stmt.setDouble(6,alertPrice);
+			stmt.executeUpdate();
+
+		}
+		finally {
+			if(stmt!= null) {
+				stmt.close();
+			}
+			conn.close();
+		}
+	}
 public List <StockDataBean> getStockData(String stockCode) throws SQLException{
 	List <StockDataBean> stockDataList = new ArrayList<StockDataBean>();
 	Connection conn= DBTxn.INSTANCE.DS.getConnection();
@@ -236,7 +260,13 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 			stmt = conn.prepareStatement("Select p.portfolio_id, p.stock_code, p.qty ,p.price,p.txn_date, s.close " +
 					"from portfolio p, stock_data s " +
 					"where p.stock_code= s.stock_code " +
-					"and s.txn_date =  (select max(txn_date) from stock_data where stock_code =p.stock_code)");
+					"and s.txn_date =  (select max(txn_date) from stock_data where stock_code =p.stock_code) " +
+					"union " +
+					"select 1, st.stock_code,0,0,null,s1.close " +
+					"from stocks st,stock_data s1 " +
+					"where st.watchlist_flag = 'Y' " +
+					"and st.stock_code = s1.stock_code " +
+					"and s1.txn_date =  (select max(txn_date) from stock_data where stock_code =s1.stock_code)");
 			rs = stmt.executeQuery();
 			while(rs.next()) {
 				PortfolioBean beanObj = new PortfolioBean();
@@ -291,7 +321,9 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 			beanObj.setStockCode(stockCode);
 			beanObj.setCurrentPrice(currentPrice);
 			beanObj.setQty(qty);
-			beanObj.setPrice(totalInvestment.divide( new BigDecimal(qty)).doubleValue());
+			if(qty!= 0) {
+				beanObj.setPrice(totalInvestment.divide(new BigDecimal(qty)).doubleValue());
+			}
 			beanObj.setTotalInvestment(totalInvestment.doubleValue());
 			BigDecimal actualPL =new BigDecimal(currentPrice);
 			actualPL.setScale(2,RoundingMode.HALF_UP);
@@ -486,4 +518,82 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 		return beanObj;
 
 	}
+
+	public LatestStockDataBean getLatestStockData (String stockCode) throws SQLException {
+		;
+		LatestStockDataBean beanObj = new LatestStockDataBean();
+		Connection conn= DBTxn.INSTANCE.DS.getConnection();
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+		try {
+			stmt = conn.prepareStatement("select s.close, p.price,s.txn_date from stock_data s, portfolio p " +
+					"where s.stock_code  = ? " +
+					"and s.stock_code = p.stock_code " +
+					"and s.txn_date = (select max(s1.txn_date) from stock_data s1 where s1.stock_code = s.stock_code)");
+			stmt.setString(1, stockCode);
+			rs = stmt.executeQuery();
+			while(rs.next()) {
+				beanObj.setBuyPrice(rs.getDouble("price"));
+				beanObj.setLatestPrice(rs.getDouble("close"));
+				beanObj.setLatestDate(rs.getDate("txn_date"));
+			}
+		}
+		finally {
+			if(rs != null) {
+				rs.close();
+			}
+			if(stmt != null) {
+				stmt.close();
+			}
+			conn.close();
+		}
+		return beanObj;
+	}
+
+
+	public void saveStocks(String stockCode, String stockName, String exchange) throws SQLException{
+		Connection conn= DBTxn.INSTANCE.DS.getConnection();
+		PreparedStatement stmt = null;
+		try {
+			stmt = conn.prepareStatement("insert into stocks (stock_code,stock_name,exchange) values (?,?,?)");
+			stmt.setString(1, stockCode);
+			stmt.setString(2,stockName);
+			stmt.setString(3,exchange);
+			stmt.executeUpdate();
+		}
+		finally {
+			if(stmt!= null) {
+				stmt.close();
+			}
+			conn.close();
+		}
+		SyncData sync = new SyncData();
+		try {
+			sync.syncData();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	public void addWatchlist(String stockCode) throws SQLException{
+		Connection conn= DBTxn.INSTANCE.DS.getConnection();
+		PreparedStatement stmt = null;
+		try {
+			stmt = conn.prepareStatement("update stocks set watchlist_flag = 'Y' where stock_code = ?");
+			stmt.setString(1, stockCode);
+			stmt.executeUpdate();
+		}
+		finally {
+			if(stmt!= null) {
+				stmt.close();
+			}
+			conn.close();
+		}
+		SyncData sync = new SyncData();
+		try {
+			sync.syncData();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 }

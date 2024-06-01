@@ -16,6 +16,7 @@ create table stocks (
 stock_code varchar2(50) NOT NULL,
 stock_name varchar2(200) NOT NULL,
 exchange   varchar2(10) NOT NULL,
+watchlist_flag varchar2(10),
 CONSTRAINT stocks_pk PRIMARY KEY (stock_code)
 );
 

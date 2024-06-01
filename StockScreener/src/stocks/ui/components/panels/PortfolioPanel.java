@@ -74,7 +74,6 @@ public class PortfolioPanel extends JPanel implements ActionListener{
         table.getColumnModel().getColumn(6).setPreferredWidth(60);
         table.getColumnModel().getColumn(7).setPreferredWidth(60);
         table.getColumnModel().getColumn(8).setPreferredWidth(10);
-        table.getColumnModel().getColumn(9).setPreferredWidth(10);
 
         table.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {

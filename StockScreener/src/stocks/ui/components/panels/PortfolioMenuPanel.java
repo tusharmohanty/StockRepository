@@ -75,24 +75,24 @@ public class PortfolioMenuPanel extends JPanel implements ActionListener {
     }
     private void addComponentsToPanel() {
         double size[][] =
-                {{0.01,0.075,0.225,0.04,0.03,0.05,0.59},
-                        {0.05,0.2,0.2,0.2,0.2,0.15}};
+                {{0.12,0.12,0.18,0.2,0.38},
+                        {0.15,0.15,0.15,0.15,0.35}};
         this.setLayout(new TableLayout(size));
 
-        this.add(datePicker,"1,1,1,1");
-        this.add(commentBasis,"1,2,1,2");
-        this.add(commentType,"1,3,1,3");
-        this.add(addComments,"1,4,1,4");
+        this.add(datePicker,"0,0,2,0");
 
-        this.add(textPane,"2,1,2,4");
+        this.add(commentBasis,"0,1,1,1");
+        this.add(commentType,"2,1,2,1");
+        this.add(addComments,"3,1,3,1");
 
-        this.add(viewConcallNotes,"3,1,4,1");
-        this.add(earningCallQuarter,"3,2,4,2");
-        this.add(buySell,"3,3,3,3");
-        this.add(stopLoss,"4,3,4,3");
+        this.add(earningCallQuarter,"0,2,1,2");
+        this.add(earningCallNotes,"2,2,3,2");
 
-        this.add(earningCallNotes,"5,2,5,2");
-        this.add(addStopLoss,"5,3,5,3");
+        this.add(buySell,"0,3,0,3");
+        this.add(stopLoss,"1,3,1,3");
+        this.add(addStopLoss,"2,3,2,3");
+
+        this.add(textPane,"0,4,4,4");
 
     }
     public void actionPerformed(ActionEvent e) {
@@ -122,7 +122,15 @@ public class PortfolioMenuPanel extends JPanel implements ActionListener {
         }
         else if(e.getSource() instanceof JButton  && e.getActionCommand().equals("Add")){
             String watchListType = this.buySell.getSelectedItem().toString();
-
+            double  alertPrice = Double.parseDouble(this.stopLoss.getText());
+            double threshold = 5d;
+            String comments = this.textPane.getText();
+            java.sql.Date  dateValue = new java.sql.Date(this.datePicker.getModel().getYear(),this.datePicker.getModel().getMonth(),this.datePicker.getModel().getDay());
+            try {
+                DataAccess.INSTANCE.saveAlerts(stockCode,watchListType,threshold,comments,dateValue,alertPrice);
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
 
         }
     }

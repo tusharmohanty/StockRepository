@@ -64,7 +64,9 @@ public class PortfolioBean {
     }
 
     public void setPL() {
-        this.pL = round(((this.currentPrice - this.price)/this.price) *100,2);
+        if(this.price != 0) {
+            this.pL = round(((this.currentPrice - this.price) / this.price) * 100, 2);
+        }
     }
 
     public double getWeightage() {
