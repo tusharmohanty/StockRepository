@@ -3,6 +3,8 @@ package stocks.ui.components.panels;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -73,24 +75,36 @@ public class PortfolioPanel extends JPanel implements ActionListener{
         table.getColumnModel().getColumn(7).setPreferredWidth(60);
         table.getColumnModel().getColumn(8).setPreferredWidth(10);
         table.getColumnModel().getColumn(9).setPreferredWidth(10);
+
+        table.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 1) {
+                    JTable target = (JTable)e.getSource();
+                    int row = target.getSelectedRow();
+                    int column = target.getSelectedColumn();
+                    if(column == 8){
+                        openScreener(table.getValueAt(table.getSelectedRow(), 0).toString());
+                    }
+                }
+            }
+        });
         scrollPane = new JScrollPane(table);
 
         table.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
             public void valueChanged(ListSelectionEvent event) {
                 if(event.getValueIsAdjusting()){
-                    // update the comments Data
+                    String selectedStock = table.getValueAt(table.getSelectedRow(), 0).toString();
                     try {
-                        CommentsPanel.INSTANCE.commentList = DataAccess.INSTANCE.getCommentsData(table.getValueAt(table.getSelectedRow(), 0).toString());
+                        CommentsPanel.INSTANCE.commentList = DataAccess.INSTANCE.getCommentsData(selectedStock);
                         CommentsPanel.INSTANCE.refreshFundamentalPositiveContent();
                         PortfolioMenuPanel.INSTANCE.enableButtons(true);
+                        MainPriceChart.INSTANCE.stockData = DataAccess.INSTANCE.getStockData(selectedStock);
+                        MainPriceChart.INSTANCE.positionData= DataAccess.INSTANCE.getPositionData(selectedStock,"A");
+                        MainPriceChart.INSTANCE.closedPositionData=DataAccess.INSTANCE.getPositionData(selectedStock,"I");
+                        MainPriceChart.INSTANCE.selectedStock = selectedStock;
+                        MainPriceChart.INSTANCE.refreshDataSet();
                     } catch (SQLException e) {
                         throw new RuntimeException(e);
-                    }
-                    if(table.getSelectedColumn() == 8){
-                      openScreener(table.getValueAt(table.getSelectedRow(), 0).toString());
-                    }
-                    if(table.getSelectedColumn() == 9){
-                        openDashboard(table.getValueAt(table.getSelectedRow(), 0).toString());
                     }
                 }
                 // do some actions here, for example
@@ -102,6 +116,7 @@ public class PortfolioPanel extends JPanel implements ActionListener{
     }
 
     public void actionPerformed(ActionEvent e) {
+
     }
     //Custom DefaultTableCellRenderer
 

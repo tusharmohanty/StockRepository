@@ -159,7 +159,9 @@ public List <StockDataBean> getStockData(String stockCode) throws SQLException{
 				                   + "order by txn_date desc");
 		stmt.setString(1, stockCode);
 		rs = stmt.executeQuery();
-		while(rs.next()) {
+		int tempCount =0;
+		while(rs.next() && tempCount < 365) {
+			tempCount ++;
 			StockDataBean beanObj = new StockDataBean();
 			beanObj.setStockCode(stockCode);
 			Calendar calObj = new GregorianCalendar();
@@ -455,5 +457,33 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 			conn.close();
 		}
 		return portfolioBean;
+	}
+
+	public AlertBean getBuyPriceAlert(String stockCode) throws SQLException {
+		AlertBean beanObj = new AlertBean();
+		ConsolidatedPortfolioBean portfolioBean = new ConsolidatedPortfolioBean();
+		Connection conn= DBTxn.INSTANCE.DS.getConnection();
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+		try {
+			stmt = conn.prepareStatement("Select price  from portfolio where stock_code = ?");
+			stmt.setString(1, stockCode);
+			rs = stmt.executeQuery();
+			while(rs.next()) {
+				beanObj.setAlertPrice(rs.getDouble("price"));
+				beanObj.setAlertType("BUY");
+			}
+		}
+		finally {
+			if(rs != null) {
+				rs.close();
+			}
+			if(stmt != null) {
+				stmt.close();
+			}
+			conn.close();
+		}
+		return beanObj;
+
 	}
 }

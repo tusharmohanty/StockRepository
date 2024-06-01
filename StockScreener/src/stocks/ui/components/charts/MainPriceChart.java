@@ -92,7 +92,7 @@ private MainPriceChart() {
 	// get the main chart sorted 
 	mainChart = createMainChart();
 	chartPanel = new ChartPanel(mainChart);
-	chartPanel.setPreferredSize(new java.awt.Dimension(1620, 800));
+	chartPanel.setPreferredSize(new java.awt.Dimension(1330, 600));
 	chartPanel.addChartMouseListener(this);
 	
 	initializeMainChart();
@@ -110,7 +110,7 @@ public void refreshDataSet() {
 	for (int tempCount =0;tempCount < allAnnotations.size();tempCount++) {
 		priceSubplot.removeAnnotation(allAnnotations.get(tempCount));
 	}
-	for(int tempCount=0; tempCount < 100 && stockData.size() >0;tempCount++) {
+	for(int tempCount=0; tempCount < stockData.size();tempCount++) {
 		StockDataBean beanObj = stockData.get(tempCount);
 		Day dayObj = new Day(beanObj.getDateObj().get(Calendar.DATE),
 		          beanObj.getDateObj().get(Calendar.MONTH) + 1, 
@@ -152,42 +152,19 @@ public void refreshDataSet() {
 		
 	}
 	try {
-		List<AlertBean> alertList = DataAccess.INSTANCE.getAlertList(selectedStock);
-		for(int tempCount=0; tempCount < alertList.size();tempCount++) {
-			AlertBean beanObj = alertList.get(tempCount);
-			XYRangeValueAnnotation rva = new XYRangeValueAnnotation();
-	        rva.setValue(beanObj.getAlertPrice());
-	        //rva.setLabel("Anno Test");
-	        Font f = new Font("Tahoma",1,12);
-	        rva.setLabelFont(f);
-	        rva.setStroke(new BasicStroke(1.0f));
-	        if(beanObj.getAlertType().equals("BUY")) {
-	        		rva.setPaint(Color.GREEN);
-	        }
-	        else if (beanObj.getAlertType().equals("SELL")) {
-	        		rva.setPaint(Color.RED);
-	        }
-	        else if (beanObj.getAlertType().equals("NEUTRAL")) {
-        			rva.setPaint(Color.YELLOW);
-	        }
-	        rva.setLabelTextAnchor(TextAnchor.TOP_LEFT);
-	        rva.setLabelAnchor(org.jfree.ui.RectangleAnchor.LEFT);
-	        rva.setToolTipText(beanObj.getComments());
-			rva.setLabelVisible(true);
-	        priceSubplot.addAnnotation(rva);
-
-			
-//			final Marker alertMarker = new ValueMarker(520);
-//			alertMarker.setPaint(Color.green);
-//
-//			alertMarker.setLabel("Bid Start Price");
-//			alertMarker.setLabelAnchor(RectangleAnchor.BOTTOM_RIGHT);
-//			alertMarker.setLabelTextAnchor(org.jfree.chart.ui.TextAnchor.TOP_RIGHT);
-//			priceSubplot.addRangeMarker(alertMarker);
+		AlertBean beanObj = DataAccess.INSTANCE.getBuyPriceAlert(selectedStock);
+		XYRangeValueAnnotation rva = new XYRangeValueAnnotation();
+		rva.setValue(beanObj.getAlertPrice());
+		Font f = new Font("Tahoma",1,12);
+		rva.setLabelFont(f);
+		rva.setStroke(new BasicStroke(1.0f));
+		if(beanObj.getAlertType().equals("BUY")) {
+			rva.setPaint(Color.GREEN);
 		}
-	} catch (SQLException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
+		priceSubplot.addAnnotation(rva);
+	}
+	catch (SQLException ex) {
+		throw new RuntimeException(ex);
 	}
 }
 
@@ -240,10 +217,10 @@ private JFreeChart createMainChart() {
 	priceSubplot.setRenderer(renderer);
 	
 	//AXIS 2
-    NumberAxis axis2 = new NumberAxis("Earnings");
-    axis2.setAutoRangeIncludesZero(false);
-    priceSubplot.setRangeAxis(1, axis2);
-    priceSubplot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_LEFT);
+    //NumberAxis axis2 = new NumberAxis("Earnings");
+    //axis2.setAutoRangeIncludesZero(false);
+    //priceSubplot.setRangeAxis(1, axis2);
+    //priceSubplot.setRangeAxisLocation(1, AxisLocation.BOTTOM_OR_LEFT);
     
     priceSubplot.setDataset(1, getEarningsDataSet());
     priceSubplot.mapDatasetToRangeAxis(1, 1);
