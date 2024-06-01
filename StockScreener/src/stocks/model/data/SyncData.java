@@ -79,8 +79,8 @@ private SortedMap<StockCalendar,List<String>> getTargetSyncData(List <StocksBean
 		String stockCode = stockList.get(tempCount).getStockCode();
 		String exchangeData = stockList.get(tempCount).getExchange();
 		if(exchange.equals(exchangeData)) {
-			List<StockCalendar> dataPresent = dataExists(stockCode);              // get the list of dates when data is not present
-			while (oldDate.before(currentDate)) {                            // start counting from 1 year back
+			List<StockCalendar> dataPresent = dataExists(stockCode);              // get the list of dates when data is  present
+			while (oldDate.before(currentDate) || oldDate.equals(currentDate)) {                            // start counting from 1 year back
 				if(!dataPresent.contains(oldDate)) {                         // if data is not present for the given date
 					if(!returnMap.containsKey(oldDate)) {                    // if this is a new entry , create a new list and add current stock to it 
 						List<String> valueObj =  new ArrayList<String>();

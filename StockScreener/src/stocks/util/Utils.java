@@ -1,5 +1,10 @@
 package stocks.util;
 
+import java.awt.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -9,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 import stocks.model.beans.StockDataBean;
+import stocks.ui.components.Dashboard;
 
 public class Utils {
 
@@ -50,5 +56,39 @@ public class Utils {
             }
         }
 		return returnObj;
+	}
+
+	private static void openWebpage(URI uri) {
+		Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
+		if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
+			try {
+				desktop.browse(uri);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private static void openWebpage(String url) {
+		try {
+			 openWebpage(new URL(url).toURI());
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static void openScreener(String stockCode){
+		openWebpage("https://www.screener.in/company/" + stockCode +"/#chart");
+	}
+
+
+	public static void openDashboard(String stockCode){
+		Dashboard uiObj = Dashboard.INSTANCE;
+		uiObj.initializeComponents();
+		uiObj.pack();
+		uiObj.stockPanel.setSelectedScripCode(stockCode);
+		uiObj.setVisible(true);
 	}
 }

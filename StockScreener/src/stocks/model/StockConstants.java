@@ -11,4 +11,16 @@ public final String STOCK_SCREENER_HOME = "/Users/tusharmohanty/StockScreener";
 public final String NSE_EXCHANGE = "NSE";
 public final String BSE_EXCHANGE ="BSE";
 public final String URLSEPERATOR = "/";
+
+
+    public static final String FUNDAMENTAL ="FUNDAMENTAL";
+    public static final String TECHNICAL    ="TECHNICAL";
+
+
+    public static final String POSITIVE = "POSITIVE";
+    public static final String NEGATIVE = "NEGATIVE";
+    public static final String NEUTRAL  = "NEUTRAL";
+
+    public static final String[] SUPPORTED_QUARTERS = {"Q12024","Q22024","Q32024","Q42024","Q12025","Q22025"};
+
 }

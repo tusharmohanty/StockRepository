@@ -107,3 +107,54 @@ and b.stock_code = s1.stock_code
 and b.stock_code = s2.stock_code(+)
 and (b.close < s1.close )
 order by b.TXN_DATE desc;
+
+
+create table portfolio(
+ portfolio_id NUMBER(18),
+ stock_code varchar2(100),
+ qty number(18),
+ price number(18),
+ txn_date date
+);
+
+create table comments(
+comment_id number (18),
+stock_code varchar2(100),
+comment_date date,
+comment_basis varchar2(20),
+comment_type varchar2(20),
+comment_text clob
+);
+
+
+create table  earnings_call_notes(
+call_id number(18),
+quarter varchar2(10),
+earning_year number(4),
+earnings_notes Blob
+);
+
+CREATE SEQUENCE key_seq
+  MINVALUE 1
+  MAXVALUE 999999999999999999999999999
+  START WITH 1
+  INCREMENT BY 1
+  CACHE 20;
+
+create table stock_alerts(
+stock_code varchar2(100),
+alert_type varchar2(10),
+threshold  number(18,2),
+comments varchar2(4000),
+alert_date date,
+alert_price NUMBER(18,2));
+
+  create or replace view portfolio_cons as select ti,tp, (tp-ti) as pl , (round(((tp -ti)/ti)*100,2)) as pl_percent from (select sum(price*qty) as ti , sum (current_price*qty) as tp from (select p.stock_code, qty, price, (select close
+                                  from stock_data s
+                                  where s.stock_code = p.stock_code
+                                  and s.txn_date = (select max(sd.txn_date)
+                                                   from stock_data sd
+                                                   where sd.stock_code = s.stock_code )) as current_price
+                                                                    from portfolio p, stocks st
+                                                                    where p.stock_code = st.stock_code
+                                                                    and st.exchange='NSE'));

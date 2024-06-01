@@ -25,13 +25,17 @@ import stocks.ui.components.Dashboard;
 import stocks.ui.components.charts.TradeChart;
 import stocks.ui.components.charts.MainPriceChart;
 
+import static stocks.util.Utils.openScreener;
+
 public class StockPanel extends JPanel implements ActionListener{
 public static final StockPanel INSTANCE = new StockPanel();
 JComboBox scripComboBox = null;
 JButton launchScreener = null;
 String selectedScripCode = "";
+List<StocksBean> stocksBeanList = null;
 private StockPanel() {
 	try {
+		stocksBeanList =DataAccess.INSTANCE.getStockList();
 		initializeComponents();
 	}
 	catch(Exception E) {
@@ -46,7 +50,7 @@ private void addComponentsToPanel() {
 }
 
 private void initializeComponents() throws SQLException {
-	scripComboBox = new JComboBox(DataAccess.INSTANCE.getStockList().toArray());
+	scripComboBox = new JComboBox(stocksBeanList.toArray());
 	selectedScripCode = DataAccess.INSTANCE.getStockList().get(0).getStockCode(); // on initialization the first value will be teh selected scrip
 	scripComboBox.setFont(new Font("Aptos", Font.PLAIN,11));
 	scripComboBox.addActionListener(this);
@@ -87,31 +91,19 @@ public void actionPerformed(ActionEvent e) {
         }
     }
 	else if(e.getSource() instanceof JButton ) {
-		openWebpage("https://www.screener.in/company/" + selectedScripCode +"/#chart");
+		openScreener(selectedScripCode);
 	}
 }
-	public static boolean openWebpage(URI uri) {
-		Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
-		if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
-			try {
-				desktop.browse(uri);
-				return true;
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+   public void setSelectedScripCode(String stockCode){
+	this.selectedScripCode= stockCode;
+	StocksBean selectedObj = null;
+	for (int tempCount =0 ; tempCount < stocksBeanList.size();tempCount ++){
+		if(stocksBeanList.get(tempCount).getStockCode().equals(stockCode)){
+			selectedObj = stocksBeanList.get(tempCount);
+			break;
 		}
-		return false;
 	}
-
-	public static boolean openWebpage(String url) {
-		try {
-			return openWebpage(new URL(url).toURI());
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(e);
-		}
-		return false;
-	}
+	scripComboBox.setSelectedItem(selectedObj);
+   }
 
 }

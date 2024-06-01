@@ -157,10 +157,10 @@ public void refreshDataSet() {
 			AlertBean beanObj = alertList.get(tempCount);
 			XYRangeValueAnnotation rva = new XYRangeValueAnnotation();
 	        rva.setValue(beanObj.getAlertPrice());
-	        rva.setLabel("Anno Test");
+	        //rva.setLabel("Anno Test");
 	        Font f = new Font("Tahoma",1,12);
 	        rva.setLabelFont(f);
-	        rva.setStroke(new BasicStroke(3.0f));
+	        rva.setStroke(new BasicStroke(1.0f));
 	        if(beanObj.getAlertType().equals("BUY")) {
 	        		rva.setPaint(Color.GREEN);
 	        }
@@ -170,18 +170,19 @@ public void refreshDataSet() {
 	        else if (beanObj.getAlertType().equals("NEUTRAL")) {
         			rva.setPaint(Color.YELLOW);
 	        }
-	        rva.setLabelTextAnchor(TextAnchor.CENTER_LEFT);
+	        rva.setLabelTextAnchor(TextAnchor.TOP_LEFT);
 	        rva.setLabelAnchor(org.jfree.ui.RectangleAnchor.LEFT);
 	        rva.setToolTipText(beanObj.getComments());
+			rva.setLabelVisible(true);
 	        priceSubplot.addAnnotation(rva);
 
 			
-//			final Marker alertMarker = new ValueMarker(beanObj.getAlertPrice());
+//			final Marker alertMarker = new ValueMarker(520);
 //			alertMarker.setPaint(Color.green);
-//			
+//
 //			alertMarker.setLabel("Bid Start Price");
 //			alertMarker.setLabelAnchor(RectangleAnchor.BOTTOM_RIGHT);
-//			alertMarker.setLabelTextAnchor(TextAnchor.TOP_RIGHT);
+//			alertMarker.setLabelTextAnchor(org.jfree.chart.ui.TextAnchor.TOP_RIGHT);
 //			priceSubplot.addRangeMarker(alertMarker);
 		}
 	} catch (SQLException e) {

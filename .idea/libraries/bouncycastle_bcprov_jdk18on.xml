@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="bouncycastle.bcprov.jdk18on" type="repository">
+    <properties maven-id="org.bouncycastle:bcprov-jdk18on:1.71" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/bcprov-jdk18on-1.71.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/lib/bcprov-jdk18on-1.71-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES />
+  </library>
+</component>
