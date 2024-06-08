@@ -33,14 +33,15 @@ import static stocks.util.Utils.openScreener;
 
 public class PortfolioPanel extends JPanel implements ActionListener{
     public static final PortfolioPanel INSTANCE = new PortfolioPanel();
-    public List<PortfolioBean> openPositions = new ArrayList();
+    public List<PortfolioBean> portfolioData = new ArrayList();
+    public PortfolioTableModel tableModel;
 
     JTable table = null;
     JScrollPane scrollPane = null;
 
     private PortfolioPanel() {
         try {
-            openPositions = DataAccess.INSTANCE.getPortfolioData();
+            portfolioData = DataAccess.INSTANCE.getPortfolioData();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -60,20 +61,21 @@ public class PortfolioPanel extends JPanel implements ActionListener{
 
     private void initializeComponents() throws SQLException {
 
-        PortfolioTableModel tableModel = new PortfolioTableModel();
+        tableModel = new PortfolioTableModel();
         table = new JTable(tableModel);
 
         table.setDefaultRenderer(String.class,new CustomTableRenderer());
         table.setFillsViewportHeight(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.getColumnModel().getColumn(0).setPreferredWidth(100);
-        table.getColumnModel().getColumn(1).setPreferredWidth(60);
+        table.getColumnModel().getColumn(1).setPreferredWidth(55);
         table.getColumnModel().getColumn(2).setPreferredWidth(60);
-        table.getColumnModel().getColumn(3).setPreferredWidth(50);
+        table.getColumnModel().getColumn(3).setPreferredWidth(30);
         table.getColumnModel().getColumn(4).setPreferredWidth(60);
-        table.getColumnModel().getColumn(6).setPreferredWidth(60);
-        table.getColumnModel().getColumn(7).setPreferredWidth(60);
-        table.getColumnModel().getColumn(8).setPreferredWidth(10);
+        table.getColumnModel().getColumn(6).setPreferredWidth(55);
+        table.getColumnModel().getColumn(7).setPreferredWidth(65);
+        table.getColumnModel().getColumn(8).setPreferredWidth(8);
+        table.getColumnModel().getColumn(9).setPreferredWidth(55);
 
         table.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
@@ -92,10 +94,16 @@ public class PortfolioPanel extends JPanel implements ActionListener{
         table.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
             public void valueChanged(ListSelectionEvent event) {
                 if(event.getValueIsAdjusting()){
-                    String selectedStock = table.getValueAt(table.getSelectedRow(), 0).toString();
+                    String selectedStock = "";
                     try {
-                        CommentsPanel.INSTANCE.commentList = DataAccess.INSTANCE.getCommentsData(selectedStock);
-                        CommentsPanel.INSTANCE.refreshFundamentalPositiveContent();
+                        selectedStock = table.getValueAt(table.getSelectedRow(), 0).toString();
+                    }
+                    catch(Exception E){
+                        E.printStackTrace();
+                    }
+                    try {
+                        CommentsPanel.INSTANCE.buyAlerts = DataAccess.INSTANCE.getAlertList(selectedStock,"B");
+                        CommentsPanel.INSTANCE.refreshAlerts();
                         PortfolioMenuPanel.INSTANCE.enableButtons(true);
                         MainPriceChart.INSTANCE.stockData = DataAccess.INSTANCE.getStockData(selectedStock);
                         MainPriceChart.INSTANCE.positionData= DataAccess.INSTANCE.getPositionData(selectedStock,"A");
@@ -112,8 +120,14 @@ public class PortfolioPanel extends JPanel implements ActionListener{
                 System.out.println(event.getValueIsAdjusting() );
             }
         });
-    }
 
+
+
+    }
+    public void initializeTableSorting(){
+        // Table sorting
+        table.setAutoCreateRowSorter(true);
+    }
     public void actionPerformed(ActionEvent e) {
 
     }

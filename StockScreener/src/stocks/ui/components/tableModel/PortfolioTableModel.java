@@ -11,14 +11,14 @@ import stocks.model.beans.PortfolioBean;
 import stocks.ui.components.panels.PortfolioPanel;
 
 public class PortfolioTableModel extends AbstractTableModel{
-    private String[] columnNames = {"Stock","AvgPrice","Current Price","Qty","Invst","PL","%PL","Weight %","S"};
+    private String[] columnNames = {"Stock","AvgPrice","Current Price","Qty","Invst","PL","%PL","Weight %","S","Delta"};
 
     public int getColumnCount() {
         return columnNames.length;
     }
 
     public int getRowCount() {
-        return PortfolioPanel.INSTANCE.openPositions.size();
+        return PortfolioPanel.INSTANCE.portfolioData.size();
     }
 
     public String getColumnName(int col) {
@@ -28,8 +28,8 @@ public class PortfolioTableModel extends AbstractTableModel{
     public Object getValueAt(int row, int col) {
 
         DateFormat dateFormat = new SimpleDateFormat("dd/MMM/YYYY");
-        String returnValue = "";
-        PortfolioBean data = PortfolioPanel.INSTANCE.openPositions.get(row);
+        Object returnValue = "";
+        PortfolioBean data = PortfolioPanel.INSTANCE.portfolioData.get(row);
         if(col==0) {
             returnValue = data.getStockCode();
         }
@@ -43,24 +43,32 @@ public class PortfolioTableModel extends AbstractTableModel{
             returnValue = data.getQty() + "";
         }
         else if (col ==4) {
-            returnValue = data.getTotalInvestment() + "";
+            returnValue = Double.parseDouble(data.getTotalInvestment() + "");
         }
         else if (col ==5) {
-            returnValue = data.getPlActual() + "";
+            returnValue = Double.parseDouble(data.getPlActual() + "");
         }
         else if (col ==6) {
-            returnValue = data.getPL() + "";
+            returnValue = Double.parseDouble(data.getPL() + "");
         }
         else if (col ==7) {
-            returnValue = data.getWeightage() + "";
+            returnValue = Double.parseDouble(data.getWeightage() + "");
         }
         else if (col ==8) {
             returnValue = "S";
         }
+        else if (col ==9) {
+            returnValue = Double.parseDouble(data.getDelta() + "");;
+        }
         return returnValue;
     }
     public Class getColumnClass(int c) {
-        return String.class;
+        if(c == 7 || c== 6 || c== 5 || c ==4 || c==9){
+            return Double.class;
+        }
+        else {
+            return String.class;
+        }
     }
     public boolean isCellEditable(int row, int col) {
         return false;

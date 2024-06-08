@@ -7,7 +7,7 @@ import java.sql.Date;
 public class PortfolioBean {
     long portfolioId, qty;
     String stockCode;
-    double price,currentPrice,pL,weightage, totalPortfolioValue,totalInvestment, plActual;
+    double price,currentPrice,pL,weightage, totalPortfolioValue,totalInvestment, plActual,delta;
     Date txnDate;
 
     public long getPortfolioId() {
@@ -107,5 +107,13 @@ public class PortfolioBean {
         BigDecimal bd = BigDecimal.valueOf(value);
         bd = bd.setScale(places, RoundingMode.HALF_UP);
         return bd.doubleValue();
+    }
+
+    public double getDelta() {
+        return delta;
+    }
+
+    public void setDelta(double delta) {
+        this.delta = delta;
     }
 }

@@ -209,10 +209,11 @@ public boolean isHoliday(java.sql.Date dateObject) throws SQLException {
 	boolean returnValue = false;
 	Connection conn= DBTxn.INSTANCE.DS.getConnection();
 	PreparedStatement stmt = null;
+	ResultSet rs= null;
 	try {
 		stmt = conn.prepareStatement("select 1 from  holiday_list where trunc(holiday)= trunc(?) ");
 		stmt.setDate(1, dateObject);
-		ResultSet rs =stmt.executeQuery();
+		rs =stmt.executeQuery();
 		while(rs.next()) {
 			returnValue = true;
 		}
@@ -220,6 +221,9 @@ public boolean isHoliday(java.sql.Date dateObject) throws SQLException {
 	
 }
 finally {
+    if(rs != null){
+		rs.close();
+	}
 	stmt.close();
 	conn.close();
 }
@@ -232,11 +236,13 @@ public void registerHoliday(java.sql.Date dateObject) throws SQLException {
 			stmt = conn.prepareStatement("insert into holiday_list select ? from dual " + 
 					" where not exists(select 1 " + 
 					"                 from holiday_list " + 
-					"                 where (holiday =?)) " +
-					" and not exists (select 1 from stock_data where txn_date = ?)"); // needed so that if bse fails for some reason , not all the dates are marked as holidays
+					"                 where trunc(holiday) =trunc(?)) " +
+					" and not exists (select 1 from stock_data where trunc(txn_date) = trunc(?))" +  // needed so that if bse fails for some reason , not all the dates are marked as holidays
+					"and trunc(sysdate) <> trunc(?)"); // Dont mark the current date as sysdate , cause sometimes there is a delay in bhav copy being available
 			stmt.setDate(1, dateObject);
 			stmt.setDate(2, dateObject);
 		    stmt.setDate(3, dateObject);
+		    stmt.setDate(4, dateObject);
 						stmt.executeUpdate();
 		   // conn.commit();
 		

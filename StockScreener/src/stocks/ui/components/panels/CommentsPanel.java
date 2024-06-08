@@ -2,6 +2,7 @@ package stocks.ui.components.panels;
 
 import layout.TableLayout;
 import stocks.model.StockConstants;
+import stocks.model.beans.AlertBean;
 import stocks.model.beans.CommentsBean;
 import stocks.model.data.DataAccess;
 
@@ -19,7 +20,8 @@ import java.util.Map;
 public class CommentsPanel extends JPanel{
     public static final CommentsPanel INSTANCE = new CommentsPanel();
     List<CommentsBean> commentList;
-    JTextPane fPositiveTextPane,fNegativeTextPane,fNeutralTextPane;
+    List <AlertBean> buyAlerts;
+    JTextPane alertPane,fPositiveTextPane,fNegativeTextPane,fNeutralTextPane;
     StyledDocument fPositiveTextdoc,fNegativeTextDoc,fNeutralTextDoc;
     SimpleAttributeSet positiveCommentsStyle, negativeCommentsStyle,neutralCommentsStyle;
 
@@ -46,9 +48,9 @@ public class CommentsPanel extends JPanel{
         SimpleAttributeSet headerStyle = new SimpleAttributeSet();
         StyleConstants.setBold(headerStyle, true);
 
-        fPositiveTextPane = new JTextPane();
-        fPositiveTextPane.setBackground(positiveColor );
-        fPositiveTextdoc = fPositiveTextPane.getStyledDocument();
+        alertPane = new JTextPane();
+        alertPane.setBackground(positiveColor );
+        alertPane.setContentType("text/html");
 
         fNegativeTextPane = new JTextPane();
         fNegativeTextPane.setBackground(negativeColor);
@@ -99,19 +101,19 @@ public class CommentsPanel extends JPanel{
                 {{0.01,0.33,0.33,0.32,0.01},
                         {0.25, 0.25,0.25,0.25}};
         this.setLayout(new TableLayout(size));
-        this.add(fPositiveTextPane,"1,0,1,0");
-        this.add(fNegativeTextPane,"2,0,2,0");
-        this.add(fNeutralTextPane,"3,0,3,0");
+        this.add(alertPane,"1,0,1,1");
+        //this.add(fNegativeTextPane,"2,0,2,0");
+        //this.add(fNeutralTextPane,"3,0,3,0");
         //}
         //if(fCommentList.get(StockConstants.NEGATIVE) != null ) {
-            this.add(tNegativeTextPane,"1,1,1,2");
+         //   this.add(tNegativeTextPane,"1,1,1,2");
         //}
         //Map<String,List<String>> tCommentList = commentList.get(StockConstants.TECHNICAL);
         //if(tCommentList.get(StockConstants.POSITIVE) != null ) {
-            this.add(tPositiveTextPane,"1,2,1,2");
+         //   this.add(tPositiveTextPane,"1,2,1,2");
         //}
         //if(tCommentList.get(StockConstants.NEGATIVE) != null ) {
-            this.add(tNegativeTextPane,"1,3,1,3");
+         //   this.add(tNegativeTextPane,"1,3,1,3");
         //}
     }
 
@@ -154,4 +156,15 @@ public class CommentsPanel extends JPanel{
             }
         }
     }
+
+
+    public void refreshAlerts(){
+        String alertText ="<html>";
+        for(int tempCount =0;tempCount < buyAlerts.size();tempCount ++){
+            AlertBean beanObj = buyAlerts.get(tempCount);
+            alertText +="<b>" + beanObj.getAlertDate() +":</b>" + beanObj.getComments()  + "<br>";
+        }
+        alertText +="</html>";
+        alertPane.setText(alertText);
     }
+}

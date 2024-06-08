@@ -24,7 +24,7 @@ public List <StocksBean> getStockList() throws SQLException{
 	ResultSet rs = null;
 	try {
 		stmt = conn.createStatement();
-		rs = stmt.executeQuery("Select stock_code, stock_name, exchange from stocks");
+		rs = stmt.executeQuery("Select stock_code, stock_name, exchange from stocks order by stock_name");
 		while(rs.next()) {
 			StocksBean beanObj = new StocksBean();
 			beanObj.setStockCode(rs.getString("stock_Code"));
@@ -42,6 +42,32 @@ public List <StocksBean> getStockList() throws SQLException{
 	}
 	return stockList;
 }
+
+	public List <StocksBean> getWatchlistStocks() throws SQLException{
+		List <StocksBean> stockList = new ArrayList<StocksBean>();
+		Connection conn= DBTxn.INSTANCE.DS.getConnection();
+		Statement stmt = null;
+		ResultSet rs = null;
+		try {
+			stmt = conn.createStatement();
+			rs = stmt.executeQuery("Select stock_code, stock_name, exchange from stocks where watchlist_flag= 'Y' order by stock_name");
+			while(rs.next()) {
+				StocksBean beanObj = new StocksBean();
+				beanObj.setStockCode(rs.getString("stock_Code"));
+				beanObj.setStockName(rs.getString("stock_name"));
+				beanObj.setExchange(rs.getString("exchange"));
+				stockList.add(beanObj);
+			}
+		}
+		finally {
+			if(rs!= null) {
+				rs.close();
+			}
+			stmt.close();
+			conn.close();
+		}
+		return stockList;
+	}
 
 public List <StocksBean> getPortfolioStockList() throws SQLException{
 	List <StocksBean> stockList = new ArrayList<StocksBean>();
@@ -257,14 +283,17 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 		ResultSet rs = null;
 		boolean latestValue = true;
 		try {
-			stmt = conn.prepareStatement("Select p.portfolio_id, p.stock_code, p.qty ,p.price,p.txn_date, s.close " +
-					"from portfolio p, stock_data s " +
+			stmt = conn.prepareStatement("Select p.portfolio_id, p.stock_code, p.qty ,p.price,p.txn_date, s.close ,round((((s.close - a.alert_price)/s.close)*100),2) as delta " +
+					"from portfolio p, stock_data s , stock_alerts a " +
 					"where p.stock_code= s.stock_code " +
+					"                    and p.stock_code = a.stock_code(+) " +
+					"                    and a.alert_type(+) = 'B' " +
 					"and s.txn_date =  (select max(txn_date) from stock_data where stock_code =p.stock_code) " +
 					"union " +
-					"select 1, st.stock_code,0,0,null,s1.close " +
-					"from stocks st,stock_data s1 " +
-					"where st.watchlist_flag = 'Y' " +
+					"select 1, st.stock_code,0,0,null,s1.close ,round((((s1.close - a1.alert_price)/s1.close)*100),2) as delta " +
+					"from stocks st,stock_data s1 , stock_alerts a1 " +
+					"                     where st.watchlist_flag = 'Y' " +
+					"                     and st.stock_code =a1.stock_code(+) " +
 					"and st.stock_code = s1.stock_code " +
 					"and s1.txn_date =  (select max(txn_date) from stock_data where stock_code =s1.stock_code)");
 			rs = stmt.executeQuery();
@@ -277,6 +306,7 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 				beanObj.setTxnDate(rs.getDate("txn_date"));
 				beanObj.setCurrentPrice(rs.getDouble("close"));
 				beanObj.setPL();
+				beanObj.setDelta(rs.getDouble("delta"));
 				portfolioDataList.add(beanObj);
 			}
 		}
@@ -309,12 +339,14 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 			long qty = 0L;
 			BigDecimal totalInvestment = new BigDecimal(0d);
             double currentPrice =0d;
+			double delta = 0d;
 			for(int tempCount1 =0;tempCount1 < portfolioBeanList.size();tempCount1++ ){
 				PortfolioBean innerBeanObj = portfolioBeanList.get(tempCount1);
 				if(stockCode.equals(innerBeanObj.getStockCode())){
 					qty = qty + innerBeanObj.getQty();
 					totalInvestment = totalInvestment.add(new BigDecimal(innerBeanObj.getPrice() * innerBeanObj.getQty()))  ;
 					currentPrice = innerBeanObj.getCurrentPrice();
+					delta = innerBeanObj.getDelta();
 				}
 			}
 		    PortfolioBean beanObj = new PortfolioBean();
@@ -322,7 +354,7 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 			beanObj.setCurrentPrice(currentPrice);
 			beanObj.setQty(qty);
 			if(qty!= 0) {
-				beanObj.setPrice(totalInvestment.divide(new BigDecimal(qty)).doubleValue());
+				beanObj.setPrice(totalInvestment.divide(new BigDecimal(qty),2,RoundingMode.HALF_UP).doubleValue());
 			}
 			beanObj.setTotalInvestment(totalInvestment.doubleValue());
 			BigDecimal actualPL =new BigDecimal(currentPrice);
@@ -331,6 +363,7 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 			beanObj.setPlActual(actualPL.doubleValue());
 			beanObj.setPL();
 			beanObj.setTotalPortfolioValue(totalInvestment.doubleValue());
+			beanObj.setDelta(delta);
 			returnList.add(beanObj);
 			}
 
@@ -408,6 +441,33 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 			conn.close();
 		}
 		return commentDataList;
+	}
+
+
+	public List <String> getBuyAlerts(String stockCode) throws SQLException{
+		List <String> buyAlertList = new ArrayList<String>();
+		Connection conn= DBTxn.INSTANCE.DS.getConnection();
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+		try {
+			stmt = conn.prepareStatement("select to_char(alert_date,'dd/mm/yyyy')  || ':' || alert_price  || ' <BR>' || comments  as alerts from  stock_alerts where stock_code = ?");
+			stmt.setString(1, stockCode);
+			rs = stmt.executeQuery();
+			while(rs.next()) {
+				String buyAlerts = rs.getString("alerts");
+				buyAlertList.add(buyAlerts);
+			}
+		}
+		finally {
+			if(rs != null) {
+				rs.close();
+			}
+			if(stmt != null) {
+				stmt.close();
+			}
+			conn.close();
+		}
+		return buyAlertList;
 	}
 
 	public void saveEarningsNotes(int year, String quarter,String filePath, String stockCode) throws SQLException, FileNotFoundException {
@@ -574,11 +634,16 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 			throw new RuntimeException(e);
 		}
 	}
-	public void addWatchlist(String stockCode) throws SQLException{
+	public void addUpdateWatchlist(String stockCode,boolean addFlag) throws SQLException{
 		Connection conn= DBTxn.INSTANCE.DS.getConnection();
 		PreparedStatement stmt = null;
 		try {
-			stmt = conn.prepareStatement("update stocks set watchlist_flag = 'Y' where stock_code = ?");
+			if(addFlag){
+				stmt = conn.prepareStatement("update stocks set watchlist_flag = 'Y' where stock_code = ?");
+			}
+			else{
+				stmt = conn.prepareStatement("update stocks set watchlist_flag = null where stock_code = ?");
+			}
 			stmt.setString(1, stockCode);
 			stmt.executeUpdate();
 		}
@@ -588,12 +653,8 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 			}
 			conn.close();
 		}
-		SyncData sync = new SyncData();
-		try {
-			sync.syncData();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
+
+
 
 }

@@ -46,6 +46,7 @@ public class PortfolioView extends JFrame{
         // TODO Auto-generated method stub
         PortfolioView uiObj = PortfolioView.INSTANCE;
         uiObj.initializeComponents();
+        PortfolioPanel.INSTANCE.initializeTableSorting();
         uiObj.pack();
         uiObj.setVisible(true);
     }

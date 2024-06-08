@@ -40,17 +40,22 @@ public class ConsolidatedPortfolio extends JPanel {
         ConsolidatedPortfolioBean bean = null;
         try {
             bean = DataAccess.INSTANCE.getConsolidatedPortfolio();
-            totalInvestments.setText(bean.getTotalInvestments() +"");
-            netPortFolio.setText(bean.getTotalPortfolio()+"");
-            totalProfitLossAmount.setText(bean.getProfitLoss()+ "");
-            totalProfitLossPercentage.setText(bean.getProfitLossPercentage() +"");
-            if(bean.getProfitLoss() >0){
-                netPortFolio.setForeground(green);
-                totalProfitLossAmount.setForeground(green);
-                totalProfitLossPercentage.setForeground(green);
-            }
+            refreshData(bean);
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+
+    }
+
+    public void  refreshData(ConsolidatedPortfolioBean bean){
+        totalInvestments.setText(bean.getTotalInvestments() +"");
+        netPortFolio.setText(bean.getTotalPortfolio()+"");
+        totalProfitLossAmount.setText(bean.getProfitLoss()+ "");
+        totalProfitLossPercentage.setText(bean.getProfitLossPercentage() +"");
+        if(bean.getProfitLoss() >0){
+            netPortFolio.setForeground(green);
+            totalProfitLossAmount.setForeground(green);
+            totalProfitLossPercentage.setForeground(green);
         }
 
     }
