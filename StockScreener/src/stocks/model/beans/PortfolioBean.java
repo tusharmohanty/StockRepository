@@ -7,7 +7,7 @@ import java.sql.Date;
 public class PortfolioBean {
     long portfolioId, qty;
     String stockCode;
-    double price,currentPrice,pL,weightage, totalPortfolioValue,totalInvestment, plActual,delta;
+    double price,currentPrice,pL,weightage, totalPortfolioValue,totalInvestment, plActual,delta,move;
     Date txnDate;
 
     public long getPortfolioId() {
@@ -115,5 +115,13 @@ public class PortfolioBean {
 
     public void setDelta(double delta) {
         this.delta = delta;
+    }
+
+    public double getMove() {
+        return move;
+    }
+
+    public void setMove(double move) {
+        this.move = move;
     }
 }

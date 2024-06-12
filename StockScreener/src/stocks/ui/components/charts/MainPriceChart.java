@@ -7,6 +7,7 @@ import java.awt.geom.Rectangle2D;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -52,10 +53,7 @@ import org.jfree.chart.plot.Marker;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.ValueMarker;
 
-import stocks.model.beans.AlertBean;
-import stocks.model.beans.LatestStockDataBean;
-import stocks.model.beans.PositionBean;
-import stocks.model.beans.StockDataBean;
+import stocks.model.beans.*;
 import stocks.model.data.DataAccess;
 import stocks.ui.components.panels.PortfolioPanel;
 import stocks.util.Utils;
@@ -71,7 +69,7 @@ private Crosshair[] yCrosshairs;
 public List<StockDataBean> stockData = null;
 public List<PositionBean> positionData = null;
 public List<PositionBean> closedPositionData = null;
-
+public List<StatsBean> statsData = null;
 private TimeSeries volumeSeries;
 public static final MainPriceChart INSTANCE = new MainPriceChart();
 public String selectedStock;
@@ -79,6 +77,8 @@ TimeSeries priceSeries ;
 TimeSeries buyPositionSeries;
 TimeSeries closedBuyPositionSeries;
 TimeSeries sellPositionSeries;
+
+TimeSeries ema26,ema16;
 XYTextAnnotation a;
 XYPlot priceSubplot;
 private MainPriceChart() {
@@ -87,6 +87,7 @@ private MainPriceChart() {
 		stockData = DataAccess.INSTANCE.getStockData(null);
         positionData = DataAccess.INSTANCE.getPositionData(null,"A");
         closedPositionData = DataAccess.INSTANCE.getPositionData(null,"I");
+		statsData = new ArrayList<>();
     } catch (SQLException e) {
 	// TODO Auto-generated catch block
 	e.printStackTrace();
@@ -108,6 +109,9 @@ public void refreshDataSet() {
 	sellPositionSeries.clear();
 	closedBuyPositionSeries.clear();
 	buyPositionSeries.clear();
+	ema26.clear();;
+	ema16.clear();
+
 	List<XYAnnotation> allAnnotations = priceSubplot.getAnnotations();
 	for (int tempCount =0;tempCount < allAnnotations.size();tempCount++) {
 		priceSubplot.removeAnnotation(allAnnotations.get(tempCount));
@@ -120,6 +124,21 @@ public void refreshDataSet() {
 		priceSeries.add(dayObj,beanObj.getClose());
 		volumeSeries.add(new TimeSeriesDataItem(dayObj,beanObj.getVolume()));
 		
+	}
+	try {
+		statsData = DataAccess.INSTANCE.getStatsData(selectedStock);
+		for(int tempCount =0; tempCount < statsData.size();tempCount ++){
+			StatsBean beanObj = statsData.get(tempCount);
+			Calendar calObj = Calendar.getInstance();
+			calObj.setTime(beanObj.getDateObj().getTime());
+			Day dayObj = new Day(calObj.get(Calendar.DATE),
+					calObj.get(Calendar.MONTH) + 1,
+					calObj.get(Calendar.YEAR));
+			ema26.addOrUpdate(dayObj, beanObj.getEma26());
+			ema16.addOrUpdate(dayObj, beanObj.getEma16());
+		}
+	} catch (SQLException e) {
+		throw new RuntimeException(e);
 	}
 	for(int tempCount=0; tempCount < positionData.size();tempCount++) {
 		PositionBean beanObj = positionData.get(tempCount);
@@ -206,6 +225,7 @@ private void addBasePriceAnnotations(){
 
 
 
+
 	}
 	catch (SQLException ex) {
 		throw new RuntimeException(ex);
@@ -218,17 +238,28 @@ private XYLineAndShapeRenderer getPricePlotRenderer() {
     renderer.setSeriesLinesVisible(1, false);     // earnings data is displayed as a line 
     renderer.setSeriesLinesVisible(2, false);   // position data is displayed as a dot
     renderer.setSeriesLinesVisible(3, false);   // position data is displayed as a dot
+	renderer.setSeriesLinesVisible(4, true);   // ema26 data is displayed as a line
+	renderer.setSeriesLinesVisible(5,true);    //ema16 is displayed as a line
+
     renderer.setSeriesShapesVisible(0, false);
     renderer.setSeriesShapesVisible(1, true);
     renderer.setSeriesShapesVisible(2, true);
     renderer.setSeriesShapesVisible(3, true);
-    renderer.setSeriesFillPaint(1, ChartColor.LIGHT_GREEN,true);
-    renderer.setSeriesFillPaint(2, ChartColor.LIGHT_GREEN,true);
-    renderer.setSeriesPaint(1, ChartColor.LIGHT_GREEN, true);
-    renderer.setSeriesPaint(3, ChartColor.VERY_DARK_GREEN, true);
-    renderer.setSeriesPaint(2, ChartColor.VERY_DARK_MAGENTA, true);
-    renderer.setSeriesShapesVisible(2, true);
-    renderer.setSeriesShapesVisible(3, true);
+	renderer.setSeriesShapesVisible(4, false);
+	renderer.setSeriesShapesVisible(5, false);
+
+
+	renderer.setSeriesPaint(0, ChartColor.LIGHT_GREEN, true);   // price plot is printed in green
+	renderer.setSeriesPaint(4,new ChartColor(0,255,255) , true);   // ema26 is printed in light gray
+	renderer.setSeriesPaint(5,new ChartColor(204,255,255),true); //ema16 is printed in a lighter shade of gray
+
+
+    renderer.setSeriesFillPaint(0, ChartColor.LIGHT_GREEN,true);
+//    renderer.setSeriesFillPaint(2, ChartColor.LIGHT_GREEN,true);
+
+//    renderer.setSeriesPaint(3, ChartColor.VERY_DARK_GREEN, true);
+//    renderer.setSeriesPaint(2, ChartColor.VERY_DARK_MAGENTA, true);
+//	renderer.setSeriesFillPaint(4,ChartColor.BLUE);
     renderer.setDefaultToolTipGenerator(new PriceToolTipGenerator());
     renderer.setDefaultEntityRadius(6);
     return renderer;
@@ -244,10 +275,14 @@ private JFreeChart createMainChart() {
 	buyPositionSeries = new TimeSeries ("Buy");
 	sellPositionSeries = new TimeSeries ("Sell");
 	closedBuyPositionSeries = new TimeSeries ("Buy Closed");
+	ema26 = new TimeSeries("Ema26");
+	ema16 = new TimeSeries("Ema16");
 	priceDataSet.addSeries(priceSeries);
 	priceDataSet.addSeries(buyPositionSeries);
 	priceDataSet.addSeries(sellPositionSeries);
 	priceDataSet.addSeries(closedBuyPositionSeries);
+	priceDataSet.addSeries(ema26);
+	priceDataSet.addSeries(ema16);
 	priceSubplot = new XYPlot(priceDataSet , null, priceAxis, renderer);
 	priceSubplot.setBackgroundPaint(Color.black);
 	priceSubplot.setDomainPannable(true);
@@ -314,7 +349,7 @@ private JFreeChart createMainChart() {
 	
 
 	JFreeChart chart = new JFreeChart(null, JFreeChart.DEFAULT_TITLE_FONT, mainPlot, true);
-	chart.removeLegend();
+	//chart.removeLegend();
 	return chart;
 
 }

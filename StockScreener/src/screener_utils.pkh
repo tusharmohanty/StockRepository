@@ -1,0 +1,9 @@
+create or replace PACKAGE screener_utils AUTHID CURRENT_USER AS
+
+function get_previous_close(p_stock_code in varchar2,
+                            p_txn_date   in date DEFAULT NULL)
+                            return NUMBER;
+end screener_utils;
+/
+COMMIT;
+exit;

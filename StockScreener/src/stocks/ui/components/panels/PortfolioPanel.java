@@ -63,20 +63,21 @@ public class PortfolioPanel extends JPanel implements ActionListener{
 
         tableModel = new PortfolioTableModel();
         table = new JTable(tableModel);
+        table.setModel(tableModel);
 
         table.setDefaultRenderer(String.class,new CustomTableRenderer());
         table.setFillsViewportHeight(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.getColumnModel().getColumn(0).setPreferredWidth(100);
         table.getColumnModel().getColumn(1).setPreferredWidth(55);
-        table.getColumnModel().getColumn(2).setPreferredWidth(60);
+        table.getColumnModel().getColumn(2).setPreferredWidth(55);
         table.getColumnModel().getColumn(3).setPreferredWidth(30);
-        table.getColumnModel().getColumn(4).setPreferredWidth(60);
+        table.getColumnModel().getColumn(4).setPreferredWidth(70);
         table.getColumnModel().getColumn(6).setPreferredWidth(55);
-        table.getColumnModel().getColumn(7).setPreferredWidth(65);
+        table.getColumnModel().getColumn(7).setPreferredWidth(25);
         table.getColumnModel().getColumn(8).setPreferredWidth(8);
-        table.getColumnModel().getColumn(9).setPreferredWidth(55);
-
+        table.getColumnModel().getColumn(9).setPreferredWidth(45);
+        table.getColumnModel().getColumn(10).setPreferredWidth(45);
         table.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 1) {
@@ -139,7 +140,7 @@ public class PortfolioPanel extends JPanel implements ActionListener{
                                               boolean isSelected, boolean hasFocus, int row, int column)
         {
             Object formattedValue = value;
-            if(column == 1 || column== 2 || column ==4 || column == 5 || column == 6 || column == 7 ){
+            if(column == 1 || column== 2 || column ==4 || column == 5 || column == 6 || column == 7 || column ==10){
                 DecimalFormat format = new DecimalFormat("#.##");
                 formattedValue =format.format(Double.parseDouble(value.toString()));
             }

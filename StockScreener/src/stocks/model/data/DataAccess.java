@@ -238,6 +238,38 @@ public List <StockDataBean> getStockData(String stockCode) throws SQLException{
 	return stockDataList;
 }
 
+
+	public List <StatsBean> getStatsData(String stockCode) throws SQLException{
+		List <StatsBean> statDataList = new ArrayList<StatsBean>();
+		Connection conn= DBTxn.INSTANCE.DS.getConnection();
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+		boolean latestValue = true;
+		try {
+			stmt = conn.prepareStatement("Select s.ema_26,s.ema_16,s.txn_date from stats s where s.stock_code = ? "
+					+ "order by txn_date desc");
+			stmt.setString(1, stockCode);
+			rs = stmt.executeQuery();
+			int tempCount =0;
+			while(rs.next() && tempCount < 365) {
+				tempCount ++;
+				StatsBean beanObj = new StatsBean();
+				Calendar calObj = new GregorianCalendar();
+				calObj.setTime(rs.getDate("txn_Date"));
+				beanObj.setDateObj(calObj);
+				beanObj.setEma26(rs.getDouble("ema_26"));
+				beanObj.setEma16(rs.getDouble("ema_16"));
+				statDataList.add(beanObj);
+			}
+		}
+		finally {
+			rs.close();
+			stmt.close();
+			conn.close();
+		}
+		return statDataList;
+	}
+
 public List <PositionBean> getPositionData(String stockCode, String status) throws SQLException{
 	List <PositionBean> positionDataList = new ArrayList<PositionBean>();
 	Connection conn= DBTxn.INSTANCE.DS.getConnection();
@@ -283,14 +315,16 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 		ResultSet rs = null;
 		boolean latestValue = true;
 		try {
-			stmt = conn.prepareStatement("Select p.portfolio_id, p.stock_code, p.qty ,p.price,p.txn_date, s.close ,round((((s.close - a.alert_price)/s.close)*100),2) as delta " +
+			stmt = conn.prepareStatement("Select p.portfolio_id, p.stock_code, p.qty ,p.price,p.txn_date, s.close ," +
+					"round((((s.close - a.alert_price)/s.close)*100),2) as delta,round((((s.close-screener_utils.get_previous_close(p.stock_code))/s.close)*100),2) as move " +
 					"from portfolio p, stock_data s , stock_alerts a " +
 					"where p.stock_code= s.stock_code " +
 					"                    and p.stock_code = a.stock_code(+) " +
 					"                    and a.alert_type(+) = 'B' " +
 					"and s.txn_date =  (select max(txn_date) from stock_data where stock_code =p.stock_code) " +
 					"union " +
-					"select 1, st.stock_code,0,0,null,s1.close ,round((((s1.close - a1.alert_price)/s1.close)*100),2) as delta " +
+					"select 1, st.stock_code,0,0,null,s1.close ,round((((s1.close - a1.alert_price)/s1.close)*100),2) as delta," +
+					"round((((s1.close-screener_utils.get_previous_close(st.stock_code))/s1.close)*100),2) as move " +
 					"from stocks st,stock_data s1 , stock_alerts a1 " +
 					"                     where st.watchlist_flag = 'Y' " +
 					"                     and st.stock_code =a1.stock_code(+) " +
@@ -307,6 +341,7 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 				beanObj.setCurrentPrice(rs.getDouble("close"));
 				beanObj.setPL();
 				beanObj.setDelta(rs.getDouble("delta"));
+				beanObj.setMove(rs.getDouble("move"));
 				portfolioDataList.add(beanObj);
 			}
 		}
@@ -340,6 +375,7 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 			BigDecimal totalInvestment = new BigDecimal(0d);
             double currentPrice =0d;
 			double delta = 0d;
+			double move =0d;
 			for(int tempCount1 =0;tempCount1 < portfolioBeanList.size();tempCount1++ ){
 				PortfolioBean innerBeanObj = portfolioBeanList.get(tempCount1);
 				if(stockCode.equals(innerBeanObj.getStockCode())){
@@ -347,6 +383,7 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 					totalInvestment = totalInvestment.add(new BigDecimal(innerBeanObj.getPrice() * innerBeanObj.getQty()))  ;
 					currentPrice = innerBeanObj.getCurrentPrice();
 					delta = innerBeanObj.getDelta();
+					move = innerBeanObj.getMove();
 				}
 			}
 		    PortfolioBean beanObj = new PortfolioBean();
@@ -364,6 +401,7 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 			beanObj.setPL();
 			beanObj.setTotalPortfolioValue(totalInvestment.doubleValue());
 			beanObj.setDelta(delta);
+			beanObj.setMove(move);
 			returnList.add(beanObj);
 			}
 
