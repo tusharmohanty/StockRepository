@@ -2,7 +2,8 @@ create or replace PACKAGE screener_utils AUTHID CURRENT_USER AS
 
 function get_previous_data(p_stock_code in varchar2,
                             p_txn_date   in date DEFAULT NULL,
-                            p_data_type      in varchar2 DEFAULT 'CLOSE')
+                            p_data_type      in varchar2 DEFAULT 'CLOSE',
+                            p_offset     in NUMBER  DEFAULT 1)
                             return NUMBER;
 end screener_utils;
 /

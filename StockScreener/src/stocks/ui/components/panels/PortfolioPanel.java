@@ -35,7 +35,6 @@ public class PortfolioPanel extends JPanel implements ActionListener{
     public static final PortfolioPanel INSTANCE = new PortfolioPanel();
     public List<PortfolioBean> portfolioData = new ArrayList();
     public PortfolioTableModel tableModel;
-
     JTable table = null;
     JScrollPane scrollPane = null;
 
@@ -78,6 +77,24 @@ public class PortfolioPanel extends JPanel implements ActionListener{
         table.getColumnModel().getColumn(8).setPreferredWidth(8);
         table.getColumnModel().getColumn(9).setPreferredWidth(45);
         table.getColumnModel().getColumn(10).setPreferredWidth(45);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        ListSelectionModel rowSM = table.getSelectionModel();
+        rowSM.addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) {
+                // Ignore extra messages.
+                if (e.getValueIsAdjusting())
+                    return;
+
+                ListSelectionModel lsm = (ListSelectionModel) e.getSource();
+                if (lsm.isSelectionEmpty()) {
+                    System.out.println("No rows are selected.");
+                } else {
+                    int selectedRow = lsm.getMinSelectionIndex();
+                    tableRowSelectionEvent();
+                    System.out.println("Row " + selectedRow + " is now selected.");
+                }
+            }
+        });
         table.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 1) {
@@ -95,25 +112,7 @@ public class PortfolioPanel extends JPanel implements ActionListener{
         table.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
             public void valueChanged(ListSelectionEvent event) {
                 if(event.getValueIsAdjusting()){
-                    String selectedStock = "";
-                    try {
-                        selectedStock = table.getValueAt(table.getSelectedRow(), 0).toString();
-                    }
-                    catch(Exception E){
-                        E.printStackTrace();
-                    }
-                    try {
-                        CommentsPanel.INSTANCE.buyAlerts = DataAccess.INSTANCE.getAlertList(selectedStock,"B");
-                        CommentsPanel.INSTANCE.refreshAlerts();
-                        PortfolioMenuPanel.INSTANCE.enableButtons(true);
-                        MainPriceChart.INSTANCE.stockData = DataAccess.INSTANCE.getStockData(selectedStock);
-                        MainPriceChart.INSTANCE.positionData= DataAccess.INSTANCE.getPositionData(selectedStock,"A");
-                        MainPriceChart.INSTANCE.closedPositionData=DataAccess.INSTANCE.getPositionData(selectedStock,"I");
-                        MainPriceChart.INSTANCE.selectedStock = selectedStock;
-                        MainPriceChart.INSTANCE.refreshDataSet();
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
+                    tableRowSelectionEvent();
                 }
                 // do some actions here, for example
                 // print first column value from selected row
@@ -124,6 +123,29 @@ public class PortfolioPanel extends JPanel implements ActionListener{
 
 
 
+    }
+
+
+    private void tableRowSelectionEvent(){
+        String selectedStock = "";
+        try {
+            selectedStock = table.getValueAt(table.getSelectedRow(), 0).toString();
+        }
+        catch(Exception E){
+            E.printStackTrace();
+        }
+        try {
+            CommentsPanel.INSTANCE.buyAlerts = DataAccess.INSTANCE.getAlertList(selectedStock,"B");
+            CommentsPanel.INSTANCE.refreshAlerts();
+            PortfolioMenuPanel.INSTANCE.enableButtons(true);
+            MainPriceChart.INSTANCE.stockData = DataAccess.INSTANCE.getStockData(selectedStock);
+            MainPriceChart.INSTANCE.positionData= DataAccess.INSTANCE.getPositionData(selectedStock,"A");
+            MainPriceChart.INSTANCE.closedPositionData=DataAccess.INSTANCE.getPositionData(selectedStock,"I");
+            MainPriceChart.INSTANCE.selectedStock = selectedStock;
+            MainPriceChart.INSTANCE.refreshDataSet();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
     public void initializeTableSorting(){
         // Table sorting

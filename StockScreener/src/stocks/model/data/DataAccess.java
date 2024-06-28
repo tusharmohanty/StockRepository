@@ -316,7 +316,7 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 		boolean latestValue = true;
 		try {
 			stmt = conn.prepareStatement("Select p.portfolio_id, p.stock_code, p.qty ,p.price,p.txn_date, s.close ," +
-					"round((((s.close - a.alert_price)/s.close)*100),2) as delta,round((((s.close-screener_utils.get_previous_close(p.stock_code))/s.close)*100),2) as move " +
+					"round((((s.close - a.alert_price)/s.close)*100),2) as delta,round((((s.close-screener_utils.get_previous_data(p.stock_code))/s.close)*100),2) as move " +
 					"from portfolio p, stock_data s , stock_alerts a " +
 					"where p.stock_code= s.stock_code " +
 					"                    and p.stock_code = a.stock_code(+) " +
@@ -324,7 +324,7 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 					"and s.txn_date =  (select max(txn_date) from stock_data where stock_code =p.stock_code) " +
 					"union " +
 					"select 1, st.stock_code,0,0,null,s1.close ,round((((s1.close - a1.alert_price)/s1.close)*100),2) as delta," +
-					"round((((s1.close-screener_utils.get_previous_close(st.stock_code))/s1.close)*100),2) as move " +
+					"round((((s1.close-screener_utils.get_previous_data(st.stock_code))/s1.close)*100),2) as move " +
 					"from stocks st,stock_data s1 , stock_alerts a1 " +
 					"                     where st.watchlist_flag = 'Y' " +
 					"                     and st.stock_code =a1.stock_code(+) " +
