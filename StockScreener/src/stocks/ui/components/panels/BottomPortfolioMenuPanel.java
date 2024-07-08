@@ -23,7 +23,6 @@ public class BottomPortfolioMenuPanel extends JPanel implements ActionListener {
     private BottomPortfolioMenuPanel(){
         stockName = new JLabel("Stock Name");
         stockCode = new JLabel("Stock Code");
-        stockCode = new JLabel("Stock Code");
         exchange = new JLabel("Exchange");
         stockNameText = new JTextField();
         stockCodeText = new JTextField();
@@ -43,7 +42,7 @@ public class BottomPortfolioMenuPanel extends JPanel implements ActionListener {
         removeWatchList.addActionListener(this);
         syncData.addActionListener(this);
         double size[][] =
-                {{0.11,0.08,0.06,0.1,0.65},
+                {{0.11,0.08,0.125,0.25,0.36},
                         {0.25,0.25,0.25,0.25}};
         this.setLayout(new TableLayout(size));
 

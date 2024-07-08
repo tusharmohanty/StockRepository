@@ -316,7 +316,9 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 		boolean latestValue = true;
 		try {
 			stmt = conn.prepareStatement("Select p.portfolio_id, p.stock_code, p.qty ,p.price,p.txn_date, s.close ," +
-					"round((((s.close - a.alert_price)/s.close)*100),2) as delta,round((((s.close-screener_utils.get_previous_data(p.stock_code))/s.close)*100),2) as move " +
+					"round((((s.close - a.alert_price)/s.close)*100),2) as delta," +
+					"round((((s.close-screener_utils.get_previous_data(p.stock_code))/s.close)*100),2) as move, " +
+					"round((((s.close-screener_utils.get_previous_data(p.stock_code,p_offset => 5))/s.close)*100),2) as week_move " +
 					"from portfolio p, stock_data s , stock_alerts a " +
 					"where p.stock_code= s.stock_code " +
 					"                    and p.stock_code = a.stock_code(+) " +
@@ -324,7 +326,8 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 					"and s.txn_date =  (select max(txn_date) from stock_data where stock_code =p.stock_code) " +
 					"union " +
 					"select 1, st.stock_code,0,0,null,s1.close ,round((((s1.close - a1.alert_price)/s1.close)*100),2) as delta," +
-					"round((((s1.close-screener_utils.get_previous_data(st.stock_code))/s1.close)*100),2) as move " +
+					"round((((s1.close-screener_utils.get_previous_data(st.stock_code))/s1.close)*100),2) as move, " +
+					"round((((s1.close-screener_utils.get_previous_data(st.stock_code,p_offset => 5))/s1.close)*100),2) as week_move " +
 					"from stocks st,stock_data s1 , stock_alerts a1 " +
 					"                     where st.watchlist_flag = 'Y' " +
 					"                     and st.stock_code =a1.stock_code(+) " +
@@ -342,6 +345,7 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 				beanObj.setPL();
 				beanObj.setDelta(rs.getDouble("delta"));
 				beanObj.setMove(rs.getDouble("move"));
+				beanObj.setWeekMove(rs.getDouble("week_move"));
 				portfolioDataList.add(beanObj);
 			}
 		}
@@ -376,6 +380,7 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
             double currentPrice =0d;
 			double delta = 0d;
 			double move =0d;
+			double weeklyMove = 0d;
 			for(int tempCount1 =0;tempCount1 < portfolioBeanList.size();tempCount1++ ){
 				PortfolioBean innerBeanObj = portfolioBeanList.get(tempCount1);
 				if(stockCode.equals(innerBeanObj.getStockCode())){
@@ -384,6 +389,7 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 					currentPrice = innerBeanObj.getCurrentPrice();
 					delta = innerBeanObj.getDelta();
 					move = innerBeanObj.getMove();
+					weeklyMove = innerBeanObj.getWeekMove();
 				}
 			}
 		    PortfolioBean beanObj = new PortfolioBean();
@@ -402,6 +408,7 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 			beanObj.setTotalPortfolioValue(totalInvestment.doubleValue());
 			beanObj.setDelta(delta);
 			beanObj.setMove(move);
+			beanObj.setWeekMove(weeklyMove);
 			returnList.add(beanObj);
 			}
 
@@ -691,6 +698,38 @@ public List <PositionBean> getPositionData(String stockCode, String status) thro
 			}
 			conn.close();
 		}
+	}
+
+	public List <SignalsBean> getSignals() throws SQLException{
+		List <SignalsBean> signalsList = new ArrayList<SignalsBean>();
+		Connection conn= DBTxn.INSTANCE.DS.getConnection();
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+		try {
+			stmt = conn.prepareStatement("select s.stock_code,s.txn_date,s.close from stock_data s, stats st " +
+					"where s.stock_code = st.stock_code " +
+					"and s.close = st.week_high_4 " +
+					"and s.txn_date = st.txn_date " +
+					"and s.txn_date = (select max(txn_date) from stats stats where stats.stock_code = s.stock_code)");
+			rs = stmt.executeQuery();
+			while(rs.next()) {
+				SignalsBean beanObj = new SignalsBean();
+				beanObj.setSignalType(StockConstants.WEEK_HIGH_4);
+				beanObj.setStockCode(rs.getString("stock_code"));
+				beanObj.setPrice(rs.getDouble("close"));
+				signalsList.add(beanObj);
+			}
+		}
+		finally {
+			if(rs != null) {
+				rs.close();
+			}
+			if(stmt != null) {
+				stmt.close();
+			}
+			conn.close();
+		}
+		return signalsList;
 	}
 
 

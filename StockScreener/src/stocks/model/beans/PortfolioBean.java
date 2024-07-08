@@ -7,7 +7,7 @@ import java.sql.Date;
 public class PortfolioBean {
     long portfolioId, qty;
     String stockCode;
-    double price,currentPrice,pL,weightage, totalPortfolioValue,totalInvestment, plActual,delta,move;
+    double price,currentPrice,pL,weightage, totalPortfolioValue,totalInvestment, plActual,delta,move, weekMove;
     Date txnDate;
 
     public long getPortfolioId() {
@@ -123,5 +123,13 @@ public class PortfolioBean {
 
     public void setMove(double move) {
         this.move = move;
+    }
+
+    public double getWeekMove() {
+        return weekMove;
+    }
+
+    public void setWeekMove(double weekMove) {
+        this.weekMove = weekMove;
     }
 }

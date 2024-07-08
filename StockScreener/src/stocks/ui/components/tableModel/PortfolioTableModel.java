@@ -11,7 +11,7 @@ import stocks.model.beans.PortfolioBean;
 import stocks.ui.components.panels.PortfolioPanel;
 
 public class PortfolioTableModel extends AbstractTableModel{
-    private String[] columnNames = {"Stock","AvgPrice","Current Price","Qty","Invst","PL","%PL","W%","S","Delta","Move"};
+    private String[] columnNames = {"Stock","AvgPrice","Current Price","Qty","Invst","PL","%PL","W%","S","Delta","Move","Weekly"};
 
     public int getColumnCount() {
         return columnNames.length;
@@ -63,10 +63,13 @@ public class PortfolioTableModel extends AbstractTableModel{
         else if (col ==10) {
             returnValue = Double.parseDouble(data.getMove() + "");;
         }
+        else if (col ==11) {
+            returnValue = Double.parseDouble(data.getWeekMove() + "");;
+        }
         return returnValue;
     }
     public Class getColumnClass(int c) {
-        if(c == 7 || c== 6 || c== 5 || c ==4 || c==9 || c==10){
+        if(c == 7 || c== 6 || c== 5 || c ==4 || c==9 || c==10 || c==11){
             return Double.class;
         }
         else {

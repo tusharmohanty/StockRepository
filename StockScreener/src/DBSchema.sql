@@ -9,6 +9,7 @@ GRANT create any trigger TO stocks;
 GRANT create any procedure TO stocks;
 GRANT create sequence TO stocks;
 GRANT create synonym TO stocks;
+GRANT create any type to stocks;
 ALTER USER stocks quota unlimited on USERS;
 
 
@@ -159,3 +160,5 @@ alert_price NUMBER(18,2));
                                                                     from portfolio p, stocks st
                                                                     where p.stock_code = st.stock_code
                                                                     and st.exchange='NSE'));
+
+CREATE OR REPLACE TYPE StatsType AS VARRAY(2000) OF VARCHAR2(50);

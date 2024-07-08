@@ -98,7 +98,7 @@ public class CommentsPanel extends JPanel{
 //            throw new RuntimeException(e);
 //        }
         double size[][] =
-                {{0.01,0.33,0.33,0.32,0.01},
+                {{0.01,0.43,0.33,0.22,0.01},
                         {0.25, 0.25,0.25,0.25}};
         this.setLayout(new TableLayout(size));
         this.add(alertPane,"1,0,1,1");

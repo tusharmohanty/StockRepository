@@ -23,4 +23,6 @@ public final String URLSEPERATOR = "/";
 
     public static final String[] SUPPORTED_QUARTERS = {"Q12024","Q22024","Q32024","Q42024","Q12025","Q22025"};
 
+    public static final String WEEK_HIGH_4="4 Week High";
+
 }

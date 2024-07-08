@@ -5,6 +5,14 @@ function get_previous_data(p_stock_code in varchar2,
                             p_data_type      in varchar2 DEFAULT 'CLOSE',
                             p_offset     in NUMBER  DEFAULT 1)
                             return NUMBER;
+
+function get_previous_high_low(p_stock_code in varchar2,
+                            p_txn_date   in date DEFAULT NULL,
+                            p_data_type  in varchar2 DEFAULT 'HIGH',
+                            p_offset     in NUMBER  DEFAULT 1)
+                            return NUMBER;
+
+procedure update_stats(stats IN stats_type);
 end screener_utils;
 /
 COMMIT;
