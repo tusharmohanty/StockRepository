@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -269,9 +270,13 @@ public void registerUnzipEvent(String zippedBhavCopyFilePath) throws SQLExceptio
 	}
 }
 
+
 public static void main(String args[]) throws SQLException, IOException {
-	SyncData dataObj = new SyncData();
-	dataObj.syncData();
+	java.util.Date dateObj = new java.util.Date();
+	String pattern ="dd-MMM-YYYY";
+	DateFormat df = new SimpleDateFormat(pattern);
+	String dateString = df.format(dateObj);
+	System.out.println(dateString);
 	
 }
 }

@@ -15,6 +15,9 @@ public static final String SMA_SQL =
 		+ "               from stock_data s where s.stock_code = ? order by s.TXN_DATE asc) " 
 		+ " where stock_code = ? and trunc(txn_date) = trunc(?)";
 
+
+
+
 public static final String INSERT_SMA = "INSERT INTO STATS COLUMNS(STOCK_CODE,TXN_DATE,SMA_16,SMA_26) VALUES(?,?,?,?)";
 public static final String UPDATE_EMA = "UPDATE STATS set EMA_16 =?, EMA_26 =? , MACD = ? where stock_code = ? and txn_date = ?";
 public static final String EMA_SQL =
@@ -32,6 +35,8 @@ public static final String EMA_SQL =
 	  + " and trunc(st.txn_date) = trunc(sts.txn_date) "
 	  + " and st.stock_code= ? "
 	  + " and trunc(st.txn_date) = trunc(?)";
+
+
 
 public static final String MACD_SIGNAL = "update stats s3 set s3.macd_9 = (select round((macd*0.2 +  previous_macd *0.8 ),2) as macd_9 from (select s.* , " + 
 		" nvl((select s1.macd from stats s1 where s1.stock_code = s.stock_code and trunc(s1.txn_date)= trunc((select max(s2.txn_date) from stats s2 where s2.stock_code = s.stock_code and trunc(s2.txn_date) < trunc (s.txn_date)))),s.macd) as previous_macd " + 

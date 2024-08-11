@@ -393,7 +393,6 @@ private XYDataset getEarningsDataSet() {
 		Day dayObj = new Day(beanObj.getDateObj().get(Calendar.DATE),
 		          beanObj.getDateObj().get(Calendar.MONTH) + 1, 
 		          beanObj.getDateObj().get(Calendar.YEAR));
-		earnings.add(dayObj,beanObj.getPE());
 		
 	}
 	earningsDataSet.addSeries(earnings);

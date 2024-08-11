@@ -1,13 +1,8 @@
 package stocks.model.network;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.channels.Channels;
@@ -78,12 +73,12 @@ public String downloadBhavCopy(java.util.Date dateObject, String exchange) throw
 
 private boolean register404(URL bhavUrl) {
 	boolean returnValue = false;
-	URLConnection conn= null;
+	HttpURLConnection conn= null;
 	try {
-		conn = bhavUrl.openConnection();
-		conn.setConnectTimeout(5000);
-		conn.setReadTimeout(5000);
-		conn.getInputStream();
+		conn = (HttpURLConnection) bhavUrl.openConnection();
+		conn.setRequestMethod("GET");
+		conn.setRequestProperty("User-Agent","Mozilla/5.0");
+		int responseCode = conn.getResponseCode();
 	}
 	catch (IOException ex) {
 		try {
@@ -93,6 +88,7 @@ private boolean register404(URL bhavUrl) {
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
+			System.out.println(bhavUrl.toString());
 			e.printStackTrace();
 			returnValue = true;
 		}
@@ -151,24 +147,63 @@ public String unzipBhavCopy(String zippedBhavCopyFile, String exchange) throws S
     
 }
 
-public static void main (String args[]) throws SQLException {
-	Calendar currentDate = new GregorianCalendar();
-	int lastYear = currentDate.get(Calendar.YEAR) -1;
-	Calendar oldDate = new GregorianCalendar();
-	oldDate.set(Calendar.YEAR, lastYear);
-	Downloader downloadObj = new Downloader();
-	while (oldDate.before(currentDate)) {
-		try {
-			String downloadedFile = downloadObj.downloadBhavCopy(new java.util.Date(oldDate.getTimeInMillis()),"BSE");
-			if(downloadedFile != null) {
-				System.out.println(downloadObj.unzipBhavCopy (downloadedFile,"BSE") +  " unzipped");
-			}
-			oldDate.add(Calendar.DAY_OF_YEAR, 1);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+public static void main (String args[]) throws SQLException, IOException {
+//	Calendar currentDate = new GregorianCalendar();
+//	int lastYear = currentDate.get(Calendar.YEAR) -1;
+//	Calendar oldDate = new GregorianCalendar();
+//	oldDate.set(Calendar.YEAR, lastYear);
+//	Downloader downloadObj = new Downloader();
+//	while (oldDate.before(currentDate)) {
+//		try {
+//			String downloadedFile = downloadObj.downloadBhavCopy(new java.util.Date(oldDate.getTimeInMillis()),"BSE");
+//			if(downloadedFile != null) {
+//				System.out.println(downloadObj.unzipBhavCopy (downloadedFile,"BSE") +  " unzipped");
+//			}
+//			oldDate.add(Calendar.DAY_OF_YEAR, 1);
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	}
+	ReadableByteChannel readableByteChannel = null;
+	URL bhavUrl = null ;
+	try {
+		bhavUrl = new URL("https://www.nseindia.com/api/reports?archives=[{\"name\":\"CM-UDiFF Common Bhavcopy Final (zip)\",\"type\":\"daily-reports\",\"category\":\"capital-market\",\"section\":\"equities\"}]&date=03-Jul-2024&type=equities&mode=single");
+	} catch (MalformedURLException e) {
+		throw new RuntimeException(e);
 	}
+
+
+	HttpURLConnection con = (HttpURLConnection) bhavUrl.openConnection();
+	con.addRequestProperty("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0");
+	con.setRequestMethod("GET");
+	//con.setDoOutput(true);
+	con.addRequestProperty("Accept","text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8");
+	con.addRequestProperty("Accept-Encoding","gzip, deflate, br, zstd");
+	con.addRequestProperty("Host","www.nseindia.com");
+	con.addRequestProperty("Referer","https://www.nseindia.com/all-reports");
+	con.addRequestProperty("Sec-Fetch-Dest", "document");
+	con.addRequestProperty("Sec-Fetch-Mode", "navigate");
+	con.addRequestProperty("Sec-Fetch-Site", "same-origin");
+	con.addRequestProperty("Sec-Fetch-User", "?1");
+	con.addRequestProperty("Upgrade-Insecure-Requests","1");
+	con.addRequestProperty("Connection","keep-alive");
+	con.addRequestProperty("Accept-Language","en-US,en;q=0.5");
+	con.addRequestProperty("Cookie","_ga_87M7PJ3R97=GS1.1.1720708999.21.1.1720709627.21.0.0; _ga=GA1.1.647735472.1703309215; _abck=8227ACBC4E6005943CBC761649238578~0~YAAQhzYauCzdiIuQAQAAbqc/ogzcPSO6rchXPpvDanonx9c20r2B9ZgZmEFNy/3SsuifZtbk2gUWF0mDMAqxldQhRIDPTJKMGkFXrcsNqoRmPhSmW45wDQFiEzGw1SK7wQ0Be8LiIEvGC+ZcFI7kwBDPyAmOIKEsibnoBxggyqy6MeHSWM4IH1bCrzylZL1GwAuDm3Q4573Q352auNr19V4X2y/O+Hq4AmDvymgZg99m9QB8Mdd49c8ifEdsGN/b5Y70gfCFa3QPEBAFMCcx/keGlo3ywnNmsn8EX5KIajjmbto+ryyJIfe9fZEs1glEOBEZ0TNFsXlzHsM+Gi0RmbNxV1KB/5coAz/zqZlmqYf4boO6Zh0OshUD+2VrUEm…m2B983Pw==~3753525~3688003; bm_sv=3FCC1CD5B6A539E7FA9229AC9D2D0812~YAAQhzYauO4EiYuQAQAALBpJohjIFFYal6s9SY+msv1xEBD8XG6yAfKZxNaF6+M8E5M6xtbJQYs4wKN+vMk+xwCg+gbo0PzI/crZ8ZDCn+CgTG3DIwZ29ACaHtwtUuK9bbD/2ixcfyvhtWHJGqf4sI3BwR0iTD+juhBFVB5sFmJoEfzufki3GU5uIbsd4C2RJLDvLCHv08Sj3MPqKqQha32O6MptF4CLCLlLE5s+gYcCklmNMHvXZIGiSyz/1+DM/gyV~1; nseappid=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcGkubnNlIiwiYXVkIjoiYXBpLm5zZSIsImlhdCI6MTcyMDcwOTQ5NSwiZXhwIjoxNzIwNzE2Njk1fQ.kXE7VMvN8PeP4b6vjSxOPhDm1HwZVXguHlZSJw45-V8");
+
+
+	//DataOutputStream out = new DataOutputStream(con.getOutputStream());
+
+	int status = con.getResponseCode();
+	FileOutputStream fileOutputStream =null;
+	String absFilePath = "/Users/tusharmohanty/";
+	readableByteChannel= Channels.newChannel(bhavUrl.openStream());
+	fileOutputStream = new FileOutputStream(absFilePath);
+	FileChannel fileChannel = fileOutputStream.getChannel();
+	fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+
+
+
 }
 
 

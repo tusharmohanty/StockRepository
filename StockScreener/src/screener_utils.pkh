@@ -13,6 +13,12 @@ function get_previous_high_low(p_stock_code in varchar2,
                             return NUMBER;
 
 procedure update_stats(stats IN stats_type);
+
+function calculate_sma(p_stock_code in varchar2,
+                       p_txn_date   in date DEFAULT NULL,
+                       p_field      in VARCHAR2,
+                       p_interval     in number)
+                       return number;
 end screener_utils;
 /
 COMMIT;

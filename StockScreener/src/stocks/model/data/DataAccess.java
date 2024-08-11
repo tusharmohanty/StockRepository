@@ -222,7 +222,6 @@ public List <StockDataBean> getStockData(String stockCode) throws SQLException{
 			beanObj.setHigh(rs.getDouble("high"));
 			beanObj.setLow(rs.getDouble("low"));
 			beanObj.setVolume(rs.getLong("volume"));
-			beanObj.setPE(rs.getDouble("pe"));
 			stockDataList.add(beanObj);
 			if(latestValue) {
 				this.latestValue=beanObj.getClose();

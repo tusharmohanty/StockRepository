@@ -57,7 +57,10 @@ create table stats(
   ema_16     NUMBER(18,2),
   ema_26     NUMBER(18,2),
   macd       NUMBER(18,2),
-  macd_9     NUMBER(18,2)
+  macd_9     NUMBER(18,2),
+  ema_12     NUMBER(18,2),
+  week_high_4 NUMBER(18,2),
+  week_low_4 NUMBER(18,2),
   CONSTRAINT stats_pk PRIMARY KEY (stock_code,txn_date)
 );
 
@@ -133,7 +136,8 @@ create table  earnings_call_notes(
 call_id number(18),
 quarter varchar2(10),
 earning_year number(4),
-earnings_notes Blob
+earnings_notes Blob,
+"STOCK_CODE" VARCHAR2(100 BYTE)
 );
 
 CREATE SEQUENCE key_seq
@@ -161,4 +165,22 @@ alert_price NUMBER(18,2));
                                                                     where p.stock_code = st.stock_code
                                                                     and st.exchange='NSE'));
 
-CREATE OR REPLACE TYPE StatsType AS VARRAY(2000) OF VARCHAR2(50);
+CREATE OR REPLACE TYPE stats_type AS VARRAY(2000) OF VARCHAR2(50);
+create or replace type date_type  AS VARRAY(200000) OF DATE;
+
+create table access_tokens (
+request_token VARCHAR2(2000) NOT NULL,
+creation_date TIMESTAMP NOT NULL,
+access_token  varchar2(2000) NOT NULL,
+public_token  varchar2(2000) NOT NULL,
+CONSTRAINT access_token_pk PRIMARY KEY (request_token)
+);
+
+
+create table instruments (
+instrument_id NUMBER(18),
+exchange VARCHAR2(10),
+instrument_name varchar2(2000),
+instrument_symbol VARCHAR2(100),
+CONSTRAINT instruments_pk PRIMARY KEY (instrument_id)
+);

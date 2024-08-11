@@ -9,7 +9,9 @@ public class NetworkUtils {
 public static String getBhavUrl(java.util.Date dateObj, String exchange) {
 	String returnString ="";
 	if(exchange.equals(StockConstants.NSE_EXCHANGE)) {
-		returnString = StockConstants.NSE_BHAV_COPY_URL+ getNetworkPrefix(dateObj, exchange) + getBhavCopyFile(dateObj, exchange);
+		returnString = "https://www.nseindia.com/api/reports?archives=[{\"name\":\"CM-UDiFF Common Bhavcopy Final (zip)\",\"type\":\"daily-reports\",\"category\":\"capital-market\",\"section\":\"equities\"}]&date=";
+		returnString +=getNSEDateFormat(dateObj) + "&type=equities&mode=single";
+		//returnString = StockConstants.NSE_BHAV_COPY_URL+ getNetworkPrefix(dateObj, exchange) + getBhavCopyFile(dateObj, exchange);
 	}
 	else if (exchange.equals(StockConstants.BSE_EXCHANGE)) {
 		returnString = StockConstants.BSE_BHAV_COPY_URL + getBhavCopyFile(dateObj, exchange);
@@ -17,6 +19,14 @@ public static String getBhavUrl(java.util.Date dateObj, String exchange) {
 	
 	return returnString;
 }
+
+private static String getNSEDateFormat(java.util.Date dateObj){
+	String pattern ="dd-MMM-YYYY";
+	DateFormat df = new SimpleDateFormat(pattern);
+	String dateString = df.format(dateObj);
+	return dateString;
+}
+
 private static String getNetworkPrefix (java.util.Date dateObj, String exchange) {
 	DateFormat yearFormat = new SimpleDateFormat("YYYY");
 	DateFormat monthFormat = new SimpleDateFormat("MMM");
