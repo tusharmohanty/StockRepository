@@ -63,6 +63,14 @@ create or replace PACKAGE BODY screener_utils AS
                        from stats s
                        where s.stock_code = p_stock_code
                        and s.txn_date < trunc(max_txn_date) order by txn_date desc) where count =p_offset);
+    elsif p_data_type ='MACD_9' then
+            select macd_9 into previous_data
+                           from stats
+                           where stock_code = p_stock_code
+                           and txn_date = (select txn_date from (select txn_date as txn_date, rownum as count
+                           from stats s
+                           where s.stock_code = p_stock_code
+                           and s.txn_date < trunc(max_txn_date) order by txn_date desc) where count =p_offset);
     end if;
     return previous_data;
     end get_previous_data;

@@ -61,6 +61,7 @@ create table stats(
   ema_12     NUMBER(18,2),
   week_high_4 NUMBER(18,2),
   week_low_4 NUMBER(18,2),
+  obv        NUMBER(18,0),
   CONSTRAINT stats_pk PRIMARY KEY (stock_code,txn_date)
 );
 
